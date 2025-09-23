@@ -67,6 +67,7 @@ export function ZapiTab() {
     profileName: '',
     profileDescription: '',
     profilePicture: '',
+    notifySentByMe: false,
     // Webhooks
     webhookDelivery: '',
     webhookReceived: '',
@@ -341,7 +342,8 @@ export function ZapiTab() {
         zapiAction({ id: selectedInstance.id, action: 'callRejectMessage', payload: { message: settingsData.callRejectMessage } }),
         zapiAction({ id: selectedInstance.id, action: 'profileName', payload: { name: settingsData.profileName } }),
         zapiAction({ id: selectedInstance.id, action: 'profileDescription', payload: { description: settingsData.profileDescription } }),
-        zapiAction({ id: selectedInstance.id, action: 'profilePicture', payload: { url: settingsData.profilePicture } })
+        zapiAction({ id: selectedInstance.id, action: 'profilePicture', payload: { url: settingsData.profilePicture } }),
+        zapiAction({ id: selectedInstance.id, action: 'notifySentByMe', payload: { enable: settingsData.notifySentByMe } })
       ])
       
       toast.success('Configurações atualizadas')
@@ -732,6 +734,27 @@ export function ZapiTab() {
                   placeholder="https://exemplo.com/foto-perfil.jpg"
                   className="h-11"
                 />
+              </div>
+            </div>
+
+            {/* Notificações */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-medium text-foreground border-b pb-2">Notificações</h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="notifySentByMe" className="text-sm font-medium text-foreground">
+                      Notificar todas as mensagens enviadas por mim
+                    </Label>
+                  </div>
+                  <Switch
+                    id="notifySentByMe"
+                    checked={settingsData.notifySentByMe}
+                    onCheckedChange={(checked) => 
+                      setSettingsData(prev => ({ ...prev, notifySentByMe: checked }))
+                    }
+                  />
+                </div>
               </div>
             </div>
 

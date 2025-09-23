@@ -111,6 +111,8 @@ export async function zapiAction(args: {
       return Zapi.updateCallRejectAuto(ctx, !!(args.payload as { enable?: boolean })?.enable);
     case 'callRejectMessage': 
       return Zapi.updateCallRejectMessage(ctx, (args.payload as { message?: string })?.message ?? '');
+    case 'notifySentByMe': 
+      return Zapi.updateNotifySentByMe(ctx, !!(args.payload as { enable?: boolean })?.enable);
     case 'webhooks:setAllVercel': {
       const urls = buildWebhookUrls();
       await Zapi.updateWebhookDelivery(ctx, urls.delivery);
