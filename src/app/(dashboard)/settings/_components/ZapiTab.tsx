@@ -369,7 +369,7 @@ export function ZapiTab() {
       
       toast.loading('Conectando Webhooks e Configurações!', {
         id: 'saving-settings',
-        position: 'top-center',
+        position: 'bottom-right',
         duration: 0 // Não desaparece automaticamente
       })
       
@@ -440,7 +440,7 @@ export function ZapiTab() {
 
       toast.dismiss('saving-settings')
       toast.success('Configurações atualizadas com sucesso!', {
-        position: 'top-center'
+        position: 'bottom-right'
       })
       setIsSettingsDialogOpen(false)
       loadInstances()
@@ -448,7 +448,7 @@ export function ZapiTab() {
       console.error('Erro ao atualizar configurações:', error)
       toast.dismiss('saving-settings')
       toast.error(`Erro ao atualizar configurações: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, {
-        position: 'top-center'
+        position: 'bottom-right'
       })
     } finally {
       setIsSavingSettings(false)
