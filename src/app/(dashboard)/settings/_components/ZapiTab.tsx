@@ -362,55 +362,82 @@ export function ZapiTab() {
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nova Instância Z-API</DialogTitle>
-              <DialogDescription>
-                Configure uma nova instância do WhatsApp
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-xl font-semibold">Nova Instância Z-API</DialogTitle>
+              <DialogDescription className="text-base text-gray-600">
+                Configure uma nova instância do WhatsApp para começar a usar o sistema
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="alias">Apelido</Label>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="alias" className="text-sm font-medium text-gray-700">
+                  Nome da Instância
+                </Label>
                 <Input
                   id="alias"
                   value={formData.alias}
                   onChange={(e) => setFormData(prev => ({ ...prev, alias: e.target.value }))}
-                  placeholder="Ex: WhatsApp Principal"
+                  placeholder="Ex: WhatsApp Principal, Loja Online, Suporte..."
+                  className="h-11"
                 />
+                <p className="text-xs text-gray-500">Um nome amigável para identificar esta instância</p>
               </div>
-              <div>
-                <Label htmlFor="instance_id">Instance ID</Label>
+              
+              <div className="space-y-2">
+                <Label htmlFor="instance_id" className="text-sm font-medium text-gray-700">
+                  ID da Instância
+                </Label>
                 <Input
                   id="instance_id"
                   value={formData.instance_id}
                   onChange={(e) => setFormData(prev => ({ ...prev, instance_id: e.target.value }))}
-                  placeholder="SUA_INSTANCIA"
+                  placeholder="Ex: 3C7F4A2B1D8E9F0A"
+                  className="h-11"
                 />
+                <p className="text-xs text-gray-500">ID único da sua instância no Z-API</p>
               </div>
-              <div>
-                <Label htmlFor="instance_token">Instance Token</Label>
+              
+              <div className="space-y-2">
+                <Label htmlFor="instance_token" className="text-sm font-medium text-gray-700">
+                  Token da Instância
+                </Label>
                 <Input
                   id="instance_token"
                   value={formData.instance_token}
                   onChange={(e) => setFormData(prev => ({ ...prev, instance_token: e.target.value }))}
-                  placeholder="SEU_TOKEN"
+                  placeholder="Ex: 1A2B3C4D5E6F7G8H9I0J"
+                  className="h-11"
                 />
+                <p className="text-xs text-gray-500">Token de autenticação da instância</p>
               </div>
-              <div>
-                <Label htmlFor="client_security_token">Client Security Token</Label>
+              
+              <div className="space-y-2">
+                <Label htmlFor="client_security_token" className="text-sm font-medium text-gray-700">
+                  Token de Segurança
+                </Label>
                 <Input
                   id="client_security_token"
                   value={formData.client_security_token}
                   onChange={(e) => setFormData(prev => ({ ...prev, client_security_token: e.target.value }))}
-                  placeholder="TOKEN_DE_SEGURANCA"
+                  placeholder="Ex: 9Z8Y7X6W5V4U3T2S1R0Q"
+                  className="h-11"
                 />
+                <p className="text-xs text-gray-500">Token de segurança da sua conta Z-API</p>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+            <DialogFooter className="gap-3 pt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAddDialogOpen(false)}
+                className="h-11 px-6"
+              >
                 Cancelar
               </Button>
-              <Button onClick={handleAddInstance}>
+              <Button 
+                onClick={handleAddInstance}
+                className="h-11 px-6 bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
                 Criar Instância
               </Button>
             </DialogFooter>
