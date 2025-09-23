@@ -192,7 +192,10 @@ export function ZapiTab() {
       // Feedback específico para cada ação
       switch (action) {
         case 'status':
-          toast.success('Status verificado com sucesso', { position: 'bottom-right' })
+          console.log('🔍 [DEBUG] ===== STATUS DETALHADO DA INSTÂNCIA =====')
+          console.log('🔍 [DEBUG] Resposta completa da ZAPI:', result)
+          console.log('🔍 [DEBUG] Status da conexão:', result)
+          toast.success('Status verificado - veja o console para detalhes', { position: 'bottom-right' })
           setInstanceStatus(prev => ({ ...prev, [instanceId]: result }))
           break
         case 'restart':
@@ -205,11 +208,6 @@ export function ZapiTab() {
         case 'disconnect':
           toast.success('Instância desconectada com sucesso', { position: 'bottom-right' })
           setInstanceStatus(prev => ({ ...prev, [instanceId]: { connected: false } }))
-          break
-        case 'me':
-          console.log('🔍 [DEBUG] ===== CONFIGURAÇÕES ATUAIS DA ZAPI =====')
-          console.log('🔍 [DEBUG] Resposta completa da ZAPI:', result)
-          toast.success('Configurações verificadas - veja o console', { position: 'bottom-right' })
           break
         default:
           toast.success('Ação executada com sucesso', { position: 'bottom-right' })
@@ -651,9 +649,9 @@ export function ZapiTab() {
                                   <RefreshCw className="h-4 w-4 mr-2" />
                                   Verificar Status
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'me')}>
+                                <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
                                   <Settings className="h-4 w-4 mr-2" />
-                                  Verificar Configurações
+                                  Verificar Status Detalhado
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
                                   <Power className="h-4 w-4 mr-2" />
