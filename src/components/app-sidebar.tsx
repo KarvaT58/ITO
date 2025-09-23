@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  LayoutDashboard,
   MessageCircle,
   Users,
   Megaphone,
@@ -37,6 +38,11 @@ const data = {
     avatar: "/avatars/usuario.jpg",
   },
   navMain: [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+    },
     {
       title: "Chat WhatsApp",
       url: "#",
