@@ -42,8 +42,11 @@ export function SignupForm({
     const confirmPassword = formData.get('confirmPassword') as string
     const name = formData.get('name') as string
 
+    console.log('Valores dos campos:', { email, password, confirmPassword, name })
+
     // Validações mais robustas
     if (!email || !password || !name) {
+      console.log('Campos vazios:', { email: !!email, password: !!password, name: !!name })
       setError('Todos os campos são obrigatórios')
       setIsLoading(false)
       return
@@ -144,19 +147,20 @@ export function SignupForm({
       <div className="grid gap-6">
         <div className="grid gap-3">
           <Label htmlFor="name">Nome completo</Label>
-          <Input id="name" type="text" placeholder="Seu nome completo" required />
+          <Input id="name" name="name" type="text" placeholder="Seu nome completo" required />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="seu@email.com" required />
+          <Input id="email" name="email" type="email" placeholder="seu@email.com" required />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="password">Senha</Label>
           <div className="relative">
             <Input 
               id="password" 
+              name="password"
               type={showPassword ? "text" : "password"} 
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Mínimo 6 caracteres"
               required 
             />
             <button
@@ -177,6 +181,7 @@ export function SignupForm({
           <div className="relative">
             <Input 
               id="confirmPassword" 
+              name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"} 
               placeholder="Digite a senha novamente"
               required 
