@@ -54,7 +54,7 @@ export const Zapi = {
     zapiFetch({ ...ctx, path: '/update-call-reject-message', method: 'PUT', body: { value: message }}),
 
   updateNotifySentByMe: (ctx: ZApiActionContext, enable: boolean) =>
-    zapiFetch({ ...ctx, path: '/update-notify-sent-by-me', method: 'PUT', body: { notifySentByMe: enable }}),
+    zapiFetch({ ...ctx, path: '/update-notify-sent-by-me', method: 'PUT', body: { valor: enable }}),
 
   // Me (dados da instância)
   me: (ctx: ZApiActionContext) => 
