@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
-
 // Mock do Supabase para server-side
 const mockSupabase = {
   auth: {
@@ -27,7 +25,14 @@ export const getSupabaseClient = () => {
     return mockSupabase
   }
   
-  return createClient(supabaseUrl, supabaseAnonKey)
+  // Lazy import do Supabase apenas no cliente
+  try {
+    const { createClient } = require('@supabase/supabase-js')
+    return createClient(supabaseUrl, supabaseAnonKey)
+  } catch (error) {
+    console.warn('Erro ao carregar Supabase:', error)
+    return mockSupabase
+  }
 }
 
 // Exporta uma instância que só funciona no cliente
