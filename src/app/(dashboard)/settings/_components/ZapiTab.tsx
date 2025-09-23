@@ -312,23 +312,31 @@ export function ZapiTab() {
     setSelectedInstance(instance)
     setIsSettingsDialogOpen(true)
     
-    // Load current settings
-    try {
-      const [autoReadMessage, autoReadStatus, callRejectAuto] = await Promise.all([
-        zapiAction({ id: instance.id, action: 'autoReadMessage', payload: { enable: false } }).catch(() => false),
-        zapiAction({ id: instance.id, action: 'autoReadStatus', payload: { enable: false } }).catch(() => false),
-        zapiAction({ id: instance.id, action: 'callRejectAuto', payload: { enable: false } }).catch(() => false)
-      ])
-      
-      setSettingsData(prev => ({
-        ...prev,
-        autoReadMessage: Boolean(autoReadMessage),
-        autoReadStatus: Boolean(autoReadStatus),
-        callRejectAuto: Boolean(callRejectAuto)
-      }))
-    } catch {
-      // Ignore errors when loading settings
-    }
+    // Carregar configurações salvas do banco de dados
+    setSettingsData({
+      autoReadMessage: instance.auto_read_message ?? false,
+      autoReadStatus: instance.auto_read_status ?? false,
+      callRejectAuto: instance.call_reject_auto ?? false,
+      callRejectMessage: instance.call_reject_message ?? '',
+      profileName: instance.profile_name ?? '',
+      profileDescription: instance.profile_description ?? '',
+      profilePicture: instance.profile_picture ?? '',
+      notifySentByMe: instance.notify_sent_by_me ?? false,
+      webhookDelivery: instance.webhook_delivery ?? '',
+      webhookReceived: instance.webhook_received ?? '',
+      webhookReceivedDelivery: instance.webhook_received ?? '', // Usar o mesmo valor do webhook_received
+      webhookDisconnected: instance.webhook_disconnected ?? '',
+      webhookMessageStatus: instance.webhook_message_status ?? '',
+      webhookChatPresence: instance.webhook_chat_presence ?? '',
+      webhookConnected: instance.webhook_connected ?? ''
+    })
+    
+    console.log('Configurações carregadas do banco:', {
+      autoReadMessage: instance.auto_read_message,
+      autoReadStatus: instance.auto_read_status,
+      callRejectAuto: instance.call_reject_auto,
+      webhookDelivery: instance.webhook_delivery
+    })
   }
 
   const handleUpdateSettings = async () => {
@@ -379,6 +387,30 @@ export function ZapiTab() {
         }
       }
       
+      // Salvar configurações no banco de dados
+      try {
+        await updateZapiInstance(selectedInstance.id, {
+          webhook_delivery: settingsData.webhookDelivery,
+          webhook_disconnected: settingsData.webhookDisconnected,
+          webhook_received: settingsData.webhookReceived,
+          webhook_chat_presence: settingsData.webhookChatPresence,
+          webhook_message_status: settingsData.webhookMessageStatus,
+          webhook_connected: settingsData.webhookConnected,
+          notify_sent_by_me: settingsData.notifySentByMe,
+          call_reject_auto: settingsData.callRejectAuto,
+          call_reject_message: settingsData.callRejectMessage,
+          auto_read_message: settingsData.autoReadMessage,
+          auto_read_status: settingsData.autoReadStatus,
+          profile_name: settingsData.profileName,
+          profile_description: settingsData.profileDescription,
+          profile_picture: settingsData.profilePicture,
+        })
+        console.log('✅ Configurações salvas no banco de dados')
+      } catch (error) {
+        console.error('❌ Erro ao salvar configurações no banco:', error)
+        // Continuar mesmo se falhar ao salvar no banco
+      }
+
       toast.success('Configurações atualizadas com sucesso!')
       setIsSettingsDialogOpen(false)
       loadInstances()

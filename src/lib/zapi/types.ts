@@ -8,6 +8,23 @@ export type ZApiInstance = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Configurações de webhook
+  webhook_delivery?: string | null;
+  webhook_disconnected?: string | null;
+  webhook_received?: string | null;
+  webhook_chat_presence?: string | null;
+  webhook_message_status?: string | null;
+  webhook_connected?: string | null;
+  // Configurações gerais
+  notify_sent_by_me?: boolean;
+  call_reject_auto?: boolean;
+  call_reject_message?: string | null;
+  auto_read_message?: boolean;
+  auto_read_status?: boolean;
+  // Configurações de perfil
+  profile_name?: string | null;
+  profile_description?: string | null;
+  profile_picture?: string | null;
 };
 
 export type ZApiToggleBody = { value: boolean };
