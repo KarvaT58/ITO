@@ -13,6 +13,91 @@ interface SignupFormProps {
   className?: string;
 }
 
+// Função para traduzir erros do Supabase
+const translateSupabaseError = (errorMessage: string): string => {
+  const errorTranslations: { [key: string]: string } = {
+    // Erros de autenticação
+    'Invalid login credentials': 'Credenciais de login inválidas',
+    'Email not confirmed': 'Email não confirmado. Verifique sua caixa de entrada.',
+    'User not found': 'Usuário não encontrado',
+    'Invalid email': 'Email inválido',
+    'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres',
+    'User already registered': 'Usuário já cadastrado',
+    'Email address is already in use': 'Este email já está em uso',
+    'Password is too weak': 'A senha é muito fraca',
+    'Invalid password': 'Senha inválida',
+    'Too many requests': 'Muitas tentativas. Tente novamente em alguns minutos.',
+    'Network error': 'Erro de rede. Verifique sua conexão.',
+    'Server error': 'Erro do servidor. Tente novamente.',
+    'Database error saving new user': 'Erro ao salvar usuário no banco de dados',
+    'missing email or phone': 'Email ou telefone obrigatório',
+    'Email link is invalid or has expired': 'Link de email inválido ou expirado',
+    'One-time token not found': 'Token de acesso não encontrado',
+    'Session not found': 'Sessão não encontrada',
+    'Invalid token': 'Token inválido',
+    'Token expired': 'Token expirado',
+    'Account not found': 'Conta não encontrada',
+    'Account disabled': 'Conta desabilitada',
+    'Account locked': 'Conta bloqueada',
+    'Invalid verification code': 'Código de verificação inválido',
+    'Verification code expired': 'Código de verificação expirado',
+    'Phone number already in use': 'Número de telefone já está em uso',
+    'Invalid phone number': 'Número de telefone inválido',
+    'SMS sending failed': 'Falha ao enviar SMS',
+    'Email sending failed': 'Falha ao enviar email',
+    'Rate limit exceeded': 'Limite de tentativas excedido',
+    'Service temporarily unavailable': 'Serviço temporariamente indisponível',
+    'Invalid request': 'Solicitação inválida',
+    'Unauthorized': 'Não autorizado',
+    'Forbidden': 'Acesso negado',
+    'Not found': 'Não encontrado',
+    'Internal server error': 'Erro interno do servidor',
+    'Bad request': 'Solicitação inválida',
+    'Conflict': 'Conflito de dados',
+    'Precondition failed': 'Pré-condição falhou',
+    'Payload too large': 'Dados muito grandes',
+    'Unsupported media type': 'Tipo de mídia não suportado',
+    'Unprocessable entity': 'Entidade não processável',
+    'Locked': 'Recurso bloqueado',
+    'Failed dependency': 'Dependência falhou',
+    'Too early': 'Muito cedo para processar',
+    'Upgrade required': 'Atualização necessária',
+    'Precondition required': 'Pré-condição necessária',
+    'Too many requests': 'Muitas solicitações',
+    'Request header fields too large': 'Campos de cabeçalho muito grandes',
+    'Unavailable for legal reasons': 'Indisponível por razões legais',
+    'Client closed request': 'Cliente fechou a solicitação',
+    'Request timeout': 'Tempo limite da solicitação',
+    'Length required': 'Comprimento necessário',
+    'Requested range not satisfiable': 'Intervalo solicitado não satisfatório',
+    'Expectation failed': 'Expectativa falhou',
+    'I\'m a teapot': 'Sou um bule de chá',
+    'Misdirected request': 'Solicitação mal direcionada',
+    'Unprocessable content': 'Conteúdo não processável',
+    'Variant also negotiates': 'Variante também negocia',
+    'Not implemented': 'Não implementado',
+    'Bad gateway': 'Gateway inválido',
+    'Service unavailable': 'Serviço indisponível',
+    'Gateway timeout': 'Tempo limite do gateway',
+    'HTTP version not supported': 'Versão HTTP não suportada',
+    'Variant also negotiates': 'Variante também negocia',
+    'Insufficient storage': 'Armazenamento insuficiente',
+    'Loop detected': 'Loop detectado',
+    'Not extended': 'Não estendido',
+    'Network authentication required': 'Autenticação de rede necessária'
+  }
+
+  // Buscar tradução específica
+  for (const [englishError, portugueseError] of Object.entries(errorTranslations)) {
+    if (errorMessage.toLowerCase().includes(englishError.toLowerCase())) {
+      return portugueseError
+    }
+  }
+
+  // Se não encontrar tradução específica, retornar mensagem genérica
+  return `Erro: ${errorMessage}`
+}
+
 export function SignupForm({
   className,
   ...props
@@ -90,7 +175,8 @@ export function SignupForm({
 
       if (error) {
         console.error('Erro do Supabase:', error)
-        setError(error.message)
+        const translatedError = translateSupabaseError(error.message)
+        setError(translatedError)
         setIsLoading(false)
         return
       }
