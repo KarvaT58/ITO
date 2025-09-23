@@ -88,6 +88,6 @@ export const Zapi = {
       ...ctx,
       path: '/atualizar-todos-webhooks',
       method: 'PUT',
-      body: notifySentByMe == null ? { url } : { url, notifySentByMe }
+      body: notifySentByMe == null ? { valor: url } : { valor: url, notifySentByMe }
     }),
 };
