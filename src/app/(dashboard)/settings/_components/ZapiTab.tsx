@@ -31,6 +31,7 @@ import {
   createZapiInstance, 
   listZapiInstances, 
   deleteZapiInstance, 
+  updateZapiInstance,
   zapiAction, 
   getWebhookEvents 
 } from "@/server/actions/zapi"
@@ -53,8 +54,7 @@ export function ZapiTab() {
     alias: '',
     instance_id: '',
     instance_token: '',
-    client_security_token: '',
-    phone: ''
+    client_security_token: ''
   })
 
   const [settingsData, setSettingsData] = useState({
@@ -126,7 +126,7 @@ export function ZapiTab() {
       await createZapiInstance(formData)
       toast.success('Instância criada com sucesso')
       setIsAddDialogOpen(false)
-      setFormData({ alias: '', instance_id: '', instance_token: '', client_security_token: '', phone: '' })
+      setFormData({ alias: '', instance_id: '', instance_token: '', client_security_token: '' })
       loadInstances()
     } catch {
       toast.error('Erro ao criar instância')
@@ -234,7 +234,21 @@ export function ZapiTab() {
       const statusData = status as { connected?: boolean } | undefined
       
       if (statusData?.connected) {
-        // WhatsApp conectado! Fechar diálogo e atualizar status
+        // WhatsApp conectado! Obter informações do dispositivo
+        try {
+          const deviceInfo = await zapiAction({ id: instanceId, action: 'device' })
+          const deviceData = deviceInfo as { phone?: string } | undefined
+          
+          // Atualizar instância com o número de telefone
+          if (deviceData?.phone) {
+            await updateZapiInstance(instanceId, { phone: deviceData.phone })
+            console.log('Número de telefone atualizado:', deviceData.phone)
+          }
+        } catch (deviceError) {
+          console.error('Erro ao obter informações do dispositivo:', deviceError)
+        }
+        
+        // Fechar diálogo e atualizar status
         setIsQrDialogOpen(false)
         setQrCodeData(null)
         setSelectedInstance(null)
@@ -380,15 +394,6 @@ export function ZapiTab() {
                   value={formData.client_security_token}
                   onChange={(e) => setFormData(prev => ({ ...prev, client_security_token: e.target.value }))}
                   placeholder="TOKEN_DE_SEGURANCA"
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefone (opcional)</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="+5511999999999"
                 />
               </div>
             </div>
