@@ -59,9 +59,9 @@ export async function zapiFetch<T>(args: {
 function mapAppBodyToZapi(body: Record<string, unknown>) {
   const out: Record<string, unknown> = { ...body };
   
-  // Para webhooks: mapear 'url' para 'valor' (conforme documentação)
-  if ('url' in out && !('valor' in out)) {
-    out['valor'] = out['url'];
+  // Para webhooks: mapear 'url' para 'value' (baseado no erro da API)
+  if ('url' in out && !('value' in out)) {
+    out['value'] = out['url'];
     delete out['url'];
   }
   
