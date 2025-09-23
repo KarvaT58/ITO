@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -17,14 +18,16 @@ import {
   Settings,
   Smartphone,
   MessageSquare,
-  Webhook,
   Trash2,
   RefreshCw,
   Power,
   PowerOff,
   QrCode,
   Download,
-  Copy
+  Copy,
+  MoreVertical,
+  CheckCircle,
+  XCircle
 } from "lucide-react"
 import { ZApiInstance } from "@/lib/zapi/types"
 import { 
@@ -123,6 +126,7 @@ export function ZapiTab() {
     }
   }
 
+
   const loadWebhookEvents = async () => {
     try {
       const events = await getWebhookEvents()
@@ -165,27 +169,37 @@ export function ZapiTab() {
 
   const handleZapiAction = async (instanceId: string, action: string, payload?: unknown) => {
     try {
+      console.log(`Executando ação ${action} para instância ${instanceId}`)
       const result = await zapiAction({ id: instanceId, action, payload })
-      toast.success('Ação executada com sucesso')
       
-      if (action === 'status') {
-        setInstanceStatus(prev => ({ ...prev, [instanceId]: result }))
+      // Feedback específico para cada ação
+      switch (action) {
+        case 'status':
+          toast.success('Status verificado com sucesso')
+          setInstanceStatus(prev => ({ ...prev, [instanceId]: result }))
+          break
+        case 'restart':
+          toast.success('Instância reiniciada com sucesso')
+          // Recarregar status após reiniciar
+          setTimeout(() => {
+            handleZapiAction(instanceId, 'status')
+          }, 2000)
+          break
+        case 'disconnect':
+          toast.success('Instância desconectada com sucesso')
+          setInstanceStatus(prev => ({ ...prev, [instanceId]: { connected: false } }))
+          break
+        default:
+          toast.success('Ação executada com sucesso')
       }
       
       return result
-    } catch {
-      toast.error('Erro ao executar ação')
+    } catch (error) {
+      console.error(`Erro ao executar ${action}:`, error)
+      toast.error(`Erro ao executar ${action}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     }
   }
 
-  const handleConfigureWebhooks = async (instanceId: string) => {
-    try {
-      await zapiAction({ id: instanceId, action: 'webhooks:setAllVercel' })
-      toast.success('Webhooks configurados para Vercel')
-    } catch {
-      toast.error('Erro ao configurar webhooks')
-    }
-  }
 
   const handleShowQrCode = async (instance: ZApiInstance) => {
     setSelectedInstance(instance)
@@ -574,47 +588,62 @@ export function ZapiTab() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleZapiAction(instance.id, 'status')}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Status
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleZapiAction(instance.id, 'restart')}
-                        >
-                          <Power className="h-4 w-4 mr-2" />
-                          Reiniciar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleZapiAction(instance.id, 'disconnect')}
-                        >
-                          <PowerOff className="h-4 w-4 mr-2" />
-                          Desconectar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleShowQrCode(instance)}
-                        >
-                          <QrCode className="h-4 w-4 mr-2" />
-                          QR Code
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleConfigureWebhooks(instance.id)}
-                        >
-                          <Webhook className="h-4 w-4 mr-2" />
-                          Webhooks Vercel
-                        </Button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          {/* QR Code - só aparece quando desconectado */}
+                          {!isConnected && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleShowQrCode(instance)}
+                            >
+                              <QrCode className="h-4 w-4 mr-2" />
+                              QR Code
+                            </Button>
+                          )}
+                          
+                          {/* Status visual */}
+                          <div className="flex items-center space-x-1">
+                            {isConnected ? (
+                              <>
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-sm text-green-600">Online</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="h-4 w-4 text-red-500" />
+                                <span className="text-sm text-red-600">Offline</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Menu de ações */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Verificar Status
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
+                              <Power className="h-4 w-4 mr-2" />
+                              Reiniciar Instância
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'disconnect')}>
+                              <PowerOff className="h-4 w-4 mr-2" />
+                              Desconectar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openSettingsDialog(instance)}>
+                              <Settings className="h-4 w-4 mr-2" />
+                              Configurações
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </CardContent>
                   </Card>
