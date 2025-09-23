@@ -22,33 +22,67 @@ export async function zapiFetch<T>(args: {
       ? mapAppBodyToZapi(body as Record<string, unknown>)
       : body;
     init.body = payload ? JSON.stringify(payload) : undefined;
+    
+    // Debug log
+    console.log('Z-API Request:', { url, method, headers, body: init.body });
   }
 
-  const res = await fetch(url, init);
-  if (res.status === 405) throw new Error('405: Método incorreto (verifique PUT/POST/GET).');
-  if (res.status === 415) throw new Error('415: Content-Type ausente/incorreto, use application/json.');
-  if (!res.ok) {
-    try {
-      const errorText = await res.text();
-      const errorMessage = errorText || `Erro ${res.status}`;
+  try {
+    const res = await fetch(url, init);
+    
+    if (res.status === 405) throw new Error('405: Método incorreto (verifique PUT/POST/GET).');
+    if (res.status === 415) throw new Error('415: Content-Type ausente/incorreto, use application/json.');
+    
+    if (!res.ok) {
+      let errorMessage = `Erro ${res.status}`;
+      try {
+        const errorText = await res.text();
+        if (errorText && errorText.trim()) {
+          errorMessage = errorText;
+        }
+      } catch (textError) {
+        console.error('Erro ao ler resposta de erro:', textError);
+      }
       throw new Error(`${res.status}: ${errorMessage}`);
-    } catch {
-      throw new Error(`${res.status}: Erro na API Z-API`);
     }
+    
+    const result = await res.json();
+    console.log('Z-API Response:', result);
+    return result as T;
+  } catch (error) {
+    console.error('Z-API Fetch Error:', error);
+    throw error;
   }
-  return (await res.json()) as T;
 }
 
 // Converte nossa convenção interna para o esperado pela Z-API
 function mapAppBodyToZapi(body: Record<string, unknown>) {
   const out: Record<string, unknown> = { ...body };
+  
+  // Mapear 'value' para 'valor' se necessário
   if ('value' in out && !('valor' in out)) {
     out['valor'] = out['value'];
     delete out['value'];
   }
+  
+  // Mapear 'enable' para 'valor' se necessário
   if ('enable' in out && !('valor' in out)) {
     out['valor'] = !!out['enable'];
     delete out['enable'];
   }
+  
+  // Mapear 'message' para 'value' se necessário (para callRejectMessage)
+  if ('message' in out && !('value' in out) && !('valor' in out)) {
+    out['value'] = out['message'];
+    delete out['message'];
+  }
+  
+  // Mapear 'url' para 'value' se necessário (para webhooks)
+  if ('url' in out && !('value' in out) && !('valor' in out)) {
+    out['value'] = out['url'];
+    delete out['url'];
+  }
+  
+  console.log('Mapped payload:', out);
   return out;
 }
