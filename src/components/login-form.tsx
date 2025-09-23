@@ -87,7 +87,14 @@ const translateSupabaseError = (errorMessage: string): string => {
     'Network authentication required': 'Autenticação de rede necessária'
   }
 
-  // Buscar tradução específica
+  // Buscar tradução específica (busca exata primeiro)
+  for (const [englishError, portugueseError] of Object.entries(errorTranslations)) {
+    if (errorMessage.toLowerCase() === englishError.toLowerCase()) {
+      return portugueseError
+    }
+  }
+
+  // Buscar tradução por substring
   for (const [englishError, portugueseError] of Object.entries(errorTranslations)) {
     if (errorMessage.toLowerCase().includes(englishError.toLowerCase())) {
       return portugueseError
@@ -95,6 +102,7 @@ const translateSupabaseError = (errorMessage: string): string => {
   }
 
   // Se não encontrar tradução específica, retornar mensagem genérica
+  console.log('Erro não traduzido:', errorMessage)
   return `Erro: ${errorMessage}`
 }
 
@@ -144,7 +152,9 @@ export function LoginForm({
       console.log('Resposta do login:', { data, error })
 
       if (error) {
+        console.log('Erro original do Supabase:', error.message)
         const translatedError = translateSupabaseError(error.message)
+        console.log('Erro traduzido:', translatedError)
         setError(translatedError)
         setIsLoading(false)
         return
