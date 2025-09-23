@@ -5,14 +5,12 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Plus,
   Settings,
@@ -31,14 +29,12 @@ import {
   listZapiInstances, 
   deleteZapiInstance, 
   updateZapiInstance,
-  zapiAction, 
-  getWebhookEvents 
+  zapiAction
 } from "@/server/actions/zapi"
 import { toast } from "sonner"
 
 export function ZapiTab() {
   const [instances, setInstances] = useState<ZApiInstance[]>([])
-  const [webhookEvents, setWebhookEvents] = useState<{ id: number; kind: string; created_at: string; payload: unknown }[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
@@ -79,7 +75,6 @@ export function ZapiTab() {
 
   useEffect(() => {
     loadInstances()
-    loadWebhookEvents()
   }, [])
 
   // Limpar polling quando o diálogo for fechado
@@ -123,14 +118,6 @@ export function ZapiTab() {
   }
 
 
-  const loadWebhookEvents = async () => {
-    try {
-      const events = await getWebhookEvents()
-      setWebhookEvents(events)
-    } catch {
-      // Ignore errors when loading webhook events
-    }
-  }
 
   const handleAddInstance = async () => {
     try {
@@ -516,7 +503,6 @@ export function ZapiTab() {
       <Tabs defaultValue="instances" className="w-full">
         <TabsList>
           <TabsTrigger value="instances">Instâncias</TabsTrigger>
-          <TabsTrigger value="events">Eventos Recentes</TabsTrigger>
         </TabsList>
         
         <TabsContent value="instances" className="space-y-4">
@@ -623,51 +609,6 @@ export function ZapiTab() {
               })}
             </div>
           )}
-        </TabsContent>
-        
-        <TabsContent value="events" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Eventos de Webhook</CardTitle>
-              <CardDescription>
-                Últimos eventos recebidos dos webhooks
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {webhookEvents.length === 0 ? (
-                <Alert>
-                  <AlertDescription>
-                    Nenhum evento de webhook encontrado
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Payload</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {webhookEvents.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell>
-                          <Badge variant="outline">{event.kind}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(event.created_at).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {JSON.stringify(event.payload).substring(0, 100)}...
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 
@@ -916,22 +857,20 @@ export function ZapiTab() {
             
             {/* Indicador de aguardando conexão */}
             {qrCodeData?.image && qrCodeData.image.trim() !== '' && (
-              <div className="mt-6 p-6 bg-black border-2 border-white rounded-lg shadow-lg">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
-                    <p className="text-lg font-medium text-white">
-                      Aguardando conexão do WhatsApp...
-                    </p>
-                  </div>
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-gray-300">
-                      Escaneie o QR Code com seu WhatsApp
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      A tela fechará automaticamente quando conectar
-                    </p>
-                  </div>
+              <div className="mt-6 flex flex-col items-center space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-foreground border-t-transparent"></div>
+                  <p className="text-lg font-medium text-foreground">
+                    Aguardando conexão do WhatsApp...
+                  </p>
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Escaneie o QR Code com seu WhatsApp
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    A tela fechará automaticamente quando conectar
+                  </p>
                 </div>
               </div>
             )}
