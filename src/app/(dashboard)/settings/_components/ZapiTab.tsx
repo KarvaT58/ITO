@@ -23,8 +23,6 @@ import {
   Power,
   PowerOff,
   QrCode,
-  Download,
-  Copy,
   MoreVertical
 } from "lucide-react"
 import { ZApiInstance } from "@/lib/zapi/types"
@@ -242,21 +240,6 @@ export function ZapiTab() {
     }
   }
 
-  const handleCopyQrCode = () => {
-    if (qrCodeData?.bytes) {
-      navigator.clipboard.writeText(qrCodeData.bytes)
-      toast.success('QR Code copiado para a área de transferência')
-    }
-  }
-
-  const handleDownloadQrCode = () => {
-    if (qrCodeData?.image) {
-      const link = document.createElement('a')
-      link.href = qrCodeData.image
-      link.download = `qr-code-${selectedInstance?.alias || 'whatsapp'}.png`
-      link.click()
-    }
-  }
 
   const checkConnectionStatus = async (instanceId: string) => {
     try {
@@ -927,16 +910,6 @@ export function ZapiTab() {
                   height={300}
                   className="max-w-[300px] max-h-[300px] border rounded"
                 />
-                <div className="flex space-x-2">
-                  <Button onClick={handleCopyQrCode} variant="outline" size="sm">
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar Código
-                  </Button>
-                  <Button onClick={handleDownloadQrCode} variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar QR
-                  </Button>
-                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center p-8">
@@ -951,16 +924,23 @@ export function ZapiTab() {
             
             {/* Indicador de aguardando conexão */}
             {qrCodeData?.image && qrCodeData.image.trim() !== '' && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <p className="text-sm text-blue-700">
-                    Aguardando conexão do WhatsApp...
-                  </p>
+              <div className="mt-6 p-6 bg-black border-2 border-white rounded-lg shadow-lg">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                    <p className="text-lg font-medium text-white">
+                      Aguardando conexão do WhatsApp...
+                    </p>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-gray-300">
+                      Escaneie o QR Code com seu WhatsApp
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      A tela fechará automaticamente quando conectar
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-blue-600 mt-1 text-center">
-                  Escaneie o QR Code com seu WhatsApp. A tela fechará automaticamente quando conectar.
-                </p>
               </div>
             )}
           </div>
