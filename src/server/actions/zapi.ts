@@ -64,6 +64,16 @@ export async function updateZapiInstance(id: string, data: Partial<ZApiInstance>
   return row;
 }
 
+export async function getWebhookEvents() {
+  const sb = createClient();
+  const { data, error } = await sb.from('zapi_webhook_events')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return data;
+}
+
 export async function zapiAction(args: { 
   id: string; 
   action: string; 
