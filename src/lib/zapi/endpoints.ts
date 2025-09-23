@@ -42,19 +42,19 @@ export const Zapi = {
 
   // Toggles
   updateAutoReadMessage: (ctx: ZApiActionContext, enable: boolean) =>
-    zapiFetch({ ...ctx, path: '/update-auto-read-message', method: 'PUT', body: { valor: enable } }),
+    zapiFetch({ ...ctx, path: '/update-auto-read-message', method: 'PUT', body: { enable } }),
   
   updateAutoReadStatus: (ctx: ZApiActionContext, enable: boolean) =>
-    zapiFetch({ ...ctx, path: '/update-auto-read-status', method: 'PUT', body: { valor: enable } }),
+    zapiFetch({ ...ctx, path: '/update-auto-read-status', method: 'PUT', body: { enable } }),
   
   updateCallRejectAuto: (ctx: ZApiActionContext, enable: boolean) =>
-    zapiFetch({ ...ctx, path: '/update-call-reject-auto', method: 'PUT', body: { valor: enable } }),
+    zapiFetch({ ...ctx, path: '/update-call-reject-auto', method: 'PUT', body: { enable } }),
   
   updateCallRejectMessage: (ctx: ZApiActionContext, message: string) =>
-    zapiFetch({ ...ctx, path: '/update-call-reject-message', method: 'PUT', body: { value: message }}),
+    zapiFetch({ ...ctx, path: '/update-call-reject-message', method: 'PUT', body: { message }}),
 
   updateNotifySentByMe: (ctx: ZApiActionContext, enable: boolean) =>
-    zapiFetch({ ...ctx, path: '/update-notify-sent-by-me', method: 'PUT', body: { valor: enable }}),
+    zapiFetch({ ...ctx, path: '/update-notify-sent-by-me', method: 'PUT', body: { enable }}),
 
   // Me (dados da instância)
   me: (ctx: ZApiActionContext) => 
