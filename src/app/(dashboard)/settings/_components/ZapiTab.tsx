@@ -46,6 +46,8 @@ export function ZapiTab() {
   const [qrPollingInterval, setQrPollingInterval] = useState<NodeJS.Timeout | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [instanceToDelete, setInstanceToDelete] = useState<ZApiInstance | null>(null)
+  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false)
+  const [instanceToDisconnect, setInstanceToDisconnect] = useState<ZApiInstance | null>(null)
 
   // Form states
   const [formData, setFormData] = useState({
@@ -159,6 +161,26 @@ export function ZapiTab() {
     } catch (error) {
       console.error('Erro ao deletar instância:', error)
       toast.error('Erro ao deletar instância')
+    }
+  }
+
+  const handleDisconnectInstance = (instance: ZApiInstance) => {
+    setInstanceToDisconnect(instance)
+    setIsDisconnectDialogOpen(true)
+  }
+
+  const confirmDisconnectInstance = async () => {
+    if (!instanceToDisconnect) return
+    
+    try {
+      await zapiAction({ id: instanceToDisconnect.id, action: 'disconnect' })
+      toast.success('Instância desconectada com sucesso')
+      loadInstances()
+      setIsDisconnectDialogOpen(false)
+      setInstanceToDisconnect(null)
+    } catch (error) {
+      console.error('Erro ao desconectar instância:', error)
+      toast.error('Erro ao desconectar instância')
     }
   }
 
@@ -555,45 +577,53 @@ export function ZapiTab() {
                             {isConnected ? "Conectado" : "Desconectado"}
                           </Badge>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                Verificar Status
+                        <div className="flex items-center space-x-4">
+                          {/* Data à esquerda */}
+                          <div className="text-sm text-muted-foreground">
+                            <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
+                          </div>
+                          
+                          {/* Botões à direita */}
+                          <div className="flex items-center space-x-2">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  Verificar Status
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
+                                  <Power className="h-4 w-4 mr-2" />
+                                  Reiniciar Instância
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDisconnectInstance(instance)}>
+                                  <PowerOff className="h-4 w-4 mr-2" />
+                                  Desconectar
+                                </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openSettingsDialog(instance)}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Configurações
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
-                                <Power className="h-4 w-4 mr-2" />
-                                Reiniciar Instância
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'disconnect')}>
-                                <PowerOff className="h-4 w-4 mr-2" />
-                                Desconectar
-                              </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openSettingsDialog(instance)}>
-                              <Settings className="h-4 w-4 mr-2" />
-                              Configurações
-                            </DropdownMenuItem>
-                            {!isConnected && (
-                              <DropdownMenuItem onClick={() => handleShowQrCode(instance)}>
-                                <QrCode className="h-4 w-4 mr-2" />
-                                QR Code
-                              </DropdownMenuItem>
-                            )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteInstance(instance)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                              {!isConnected && (
+                                <DropdownMenuItem onClick={() => handleShowQrCode(instance)}>
+                                  <QrCode className="h-4 w-4 mr-2" />
+                                  QR Code
+                                </DropdownMenuItem>
+                              )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteInstance(instance)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                       <CardDescription>
@@ -601,10 +631,7 @@ export function ZapiTab() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {/* Sistema de horário - centralizado */}
-                      <div className="text-center text-sm text-muted-foreground">
-                        <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
-                      </div>
+                      {/* Card vazio - data movida para o header */}
                     </CardContent>
                   </Card>
                 )
@@ -915,6 +942,38 @@ export function ZapiTab() {
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Deletar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de desconexão */}
+      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar Desconexão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja desconectar a instância <strong>&ldquo;{instanceToDisconnect?.alias}&rdquo;</strong>?
+              <br />
+              <span className="text-orange-600 font-medium">A instância será desconectada da Z-API.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDisconnectDialogOpen(false)
+                setInstanceToDisconnect(null)
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDisconnectInstance}
+            >
+              <PowerOff className="h-4 w-4 mr-2" />
+              Desconectar
             </Button>
           </div>
         </DialogContent>
