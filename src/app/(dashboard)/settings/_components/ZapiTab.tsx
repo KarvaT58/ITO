@@ -38,6 +38,7 @@ export function ZapiTab() {
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false)
   const [selectedInstance, setSelectedInstance] = useState<ZApiInstance | null>(null)
   const [instanceStatus, setInstanceStatus] = useState<Record<string, unknown>>({})
@@ -335,9 +336,15 @@ export function ZapiTab() {
   const handleUpdateSettings = async () => {
     if (!selectedInstance) return
     
+    setIsSavingSettings(true)
+    
     try {
       console.log('Iniciando atualização de configurações para:', selectedInstance.alias)
       console.log('Dados de configuração:', settingsData)
+      
+      toast.loading('Conectando Webhooks e Configurações!', {
+        id: 'saving-settings'
+      })
       
       // Configurações gerais do WhatsApp - executar sequencialmente para evitar conflitos
       const generalSettings = [
@@ -404,12 +411,16 @@ export function ZapiTab() {
         // Continuar mesmo se falhar ao salvar no banco
       }
 
+      toast.dismiss('saving-settings')
       toast.success('Configurações atualizadas com sucesso!')
       setIsSettingsDialogOpen(false)
       loadInstances()
     } catch (error) {
       console.error('Erro ao atualizar configurações:', error)
+      toast.dismiss('saving-settings')
       toast.error(`Erro ao atualizar configurações: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+    } finally {
+      setIsSavingSettings(false)
     }
   }
 
@@ -807,9 +818,17 @@ export function ZapiTab() {
             </Button>
             <Button 
               onClick={handleUpdateSettings}
+              disabled={isSavingSettings}
               className="h-11 px-6"
             >
-              Salvar Configurações
+              {isSavingSettings ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  Conectando Webhooks e Configurações!
+                </>
+              ) : (
+                'Salvar Configurações'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
