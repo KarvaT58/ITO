@@ -329,6 +329,14 @@ export function ZapiTab() {
     setIsSettingsDialogOpen(true)
     
     // Carregar configurações salvas do banco de dados
+    console.log('🔍 [DEBUG] ===== CARREGANDO CONFIGURAÇÕES DO BANCO =====')
+    console.log('🔍 [DEBUG] Dados brutos da instância:', instance)
+    console.log('🔍 [DEBUG] Valores específicos das 4 configurações:')
+    console.log('🔍 [DEBUG] - auto_read_message:', instance.auto_read_message, '(tipo:', typeof instance.auto_read_message, ')')
+    console.log('🔍 [DEBUG] - auto_read_status:', instance.auto_read_status, '(tipo:', typeof instance.auto_read_status, ')')
+    console.log('🔍 [DEBUG] - call_reject_auto:', instance.call_reject_auto, '(tipo:', typeof instance.call_reject_auto, ')')
+    console.log('🔍 [DEBUG] - notify_sent_by_me:', instance.notify_sent_by_me, '(tipo:', typeof instance.notify_sent_by_me, ')')
+    
     setSettingsData({
       autoReadMessage: instance.auto_read_message ?? false,
       autoReadStatus: instance.auto_read_status ?? false,
@@ -347,12 +355,12 @@ export function ZapiTab() {
       webhookConnected: instance.webhook_connected ?? ''
     })
     
-    console.log('Configurações carregadas do banco:', {
-      autoReadMessage: instance.auto_read_message,
-      autoReadStatus: instance.auto_read_status,
-      callRejectAuto: instance.call_reject_auto,
-      webhookDelivery: instance.webhook_delivery
-    })
+    console.log('✅ [DEBUG] Configurações carregadas e definidas no state:')
+    console.log('✅ [DEBUG] - autoReadMessage:', instance.auto_read_message ?? false)
+    console.log('✅ [DEBUG] - autoReadStatus:', instance.auto_read_status ?? false)
+    console.log('✅ [DEBUG] - callRejectAuto:', instance.call_reject_auto ?? false)
+    console.log('✅ [DEBUG] - notifySentByMe:', instance.notify_sent_by_me ?? false)
+    console.log('✅ [DEBUG] ===== FIM CARREGAMENTO CONFIGURAÇÕES =====')
   }
 
   const handleUpdateSettings = async () => {
@@ -364,8 +372,16 @@ export function ZapiTab() {
     setIsSettingsDialogOpen(false)
     
     try {
-      console.log('Iniciando atualização de configurações para:', selectedInstance.alias)
-      console.log('Dados de configuração:', settingsData)
+      console.log('🔍 [DEBUG] ===== INICIANDO DEBUG DAS CONFIGURAÇÕES =====')
+      console.log('🔍 [DEBUG] Instância selecionada:', selectedInstance.alias)
+      console.log('🔍 [DEBUG] ID da instância:', selectedInstance.id)
+      console.log('🔍 [DEBUG] Dados de configuração atuais:', {
+        autoReadMessage: settingsData.autoReadMessage,
+        autoReadStatus: settingsData.autoReadStatus,
+        callRejectAuto: settingsData.callRejectAuto,
+        callRejectMessage: settingsData.callRejectMessage,
+        notifySentByMe: settingsData.notifySentByMe
+      })
       
       toast.loading('Conectando Webhooks e Configurações!', {
         id: 'saving-settings',
@@ -384,11 +400,22 @@ export function ZapiTab() {
 
       for (const setting of generalSettings) {
         try {
-          console.log(`Executando ${setting.action}:`, setting.payload)
-          await zapiAction({ id: selectedInstance.id, action: setting.action, payload: setting.payload })
-          console.log(`✅ ${setting.action} executado com sucesso`)
+          console.log(`🔍 [DEBUG] ===== EXECUTANDO ${setting.action.toUpperCase()} =====`)
+          console.log(`🔍 [DEBUG] Payload enviado:`, setting.payload)
+          console.log(`🔍 [DEBUG] Tipo do valor:`, typeof Object.values(setting.payload)[0])
+          console.log(`🔍 [DEBUG] Valor booleano:`, Object.values(setting.payload)[0])
+          
+          const result = await zapiAction({ id: selectedInstance.id, action: setting.action, payload: setting.payload })
+          
+          console.log(`✅ [DEBUG] ${setting.action} executado com sucesso!`)
+          console.log(`✅ [DEBUG] Resposta da ZAPI:`, result)
+          console.log(`✅ [DEBUG] ===== FIM ${setting.action.toUpperCase()} =====`)
         } catch (error) {
-          console.error(`❌ Erro em ${setting.action}:`, error)
+          console.error(`❌ [DEBUG] ===== ERRO EM ${setting.action.toUpperCase()} =====`)
+          console.error(`❌ [DEBUG] Erro completo:`, error)
+          console.error(`❌ [DEBUG] Mensagem do erro:`, error instanceof Error ? error.message : 'Erro desconhecido')
+          console.error(`❌ [DEBUG] Stack trace:`, error instanceof Error ? error.stack : 'N/A')
+          console.error(`❌ [DEBUG] ===== FIM ERRO ${setting.action.toUpperCase()} =====`)
           // Continuar com as outras configurações mesmo se uma falhar
         }
       }
@@ -415,8 +442,17 @@ export function ZapiTab() {
       }
       
       // Salvar configurações no banco de dados
+      console.log('🔍 [DEBUG] ===== SALVANDO NO BANCO DE DADOS =====')
+      console.log('🔍 [DEBUG] Dados que serão salvos no banco:', {
+        notify_sent_by_me: settingsData.notifySentByMe,
+        call_reject_auto: settingsData.callRejectAuto,
+        call_reject_message: settingsData.callRejectMessage,
+        auto_read_message: settingsData.autoReadMessage,
+        auto_read_status: settingsData.autoReadStatus
+      })
+      
       try {
-        await updateZapiInstance(selectedInstance.id, {
+        const updateResult = await updateZapiInstance(selectedInstance.id, {
           webhook_delivery: settingsData.webhookDelivery,
           webhook_disconnected: settingsData.webhookDisconnected,
           webhook_received: settingsData.webhookReceived,
@@ -432,9 +468,14 @@ export function ZapiTab() {
           // profile_description: settingsData.profileDescription,
           // profile_picture: settingsData.profilePicture,
         })
-        console.log('✅ Configurações salvas no banco de dados')
+        console.log('✅ [DEBUG] Configurações salvas no banco com sucesso!')
+        console.log('✅ [DEBUG] Resultado da atualização:', updateResult)
+        console.log('✅ [DEBUG] ===== FIM SALVAMENTO BANCO =====')
       } catch (error) {
-        console.error('❌ Erro ao salvar configurações no banco:', error)
+        console.error('❌ [DEBUG] ===== ERRO AO SALVAR NO BANCO =====')
+        console.error('❌ [DEBUG] Erro completo:', error)
+        console.error('❌ [DEBUG] Mensagem do erro:', error instanceof Error ? error.message : 'Erro desconhecido')
+        console.error('❌ [DEBUG] ===== FIM ERRO BANCO =====')
         // Continuar mesmo se falhar ao salvar no banco
       }
 
