@@ -155,19 +155,36 @@ export function ZapiTab() {
     setQrCodeData(null) // Reset previous data
     
     try {
-      const qrBytes = await zapiAction({ id: instance.id, action: 'qrBytes' })
-      const qrImage = await zapiAction({ id: instance.id, action: 'qrImage' })
+      const qrBytesResponse = await zapiAction({ id: instance.id, action: 'qrBytes' })
+      const qrImageResponse = await zapiAction({ id: instance.id, action: 'qrImage' })
       
-      // Validate the responses
-      if (qrBytes && qrImage && typeof qrBytes === 'string' && typeof qrImage === 'string') {
+      console.log('QR Bytes Response:', qrBytesResponse)
+      console.log('QR Image Response:', qrImageResponse)
+      
+      // Extract data from different possible response structures
+      const extractQrData = (response: unknown): string => {
+        if (typeof response === 'string') return response
+        if (response && typeof response === 'object') {
+          const obj = response as Record<string, unknown>
+          return (obj.qrCode || obj.base64 || obj.value || obj.valor || '') as string
+        }
+        return ''
+      }
+      
+      const qrBytes = extractQrData(qrBytesResponse)
+      const qrImage = extractQrData(qrImageResponse)
+      
+      // Validate the extracted data
+      if (qrBytes && qrImage && qrBytes.trim() !== '' && qrImage.trim() !== '') {
         setQrCodeData({ bytes: qrBytes, image: qrImage })
         toast.success('QR Code gerado com sucesso')
       } else {
-        throw new Error('Resposta inválida da API')
+        console.error('Dados inválidos extraídos:', { qrBytes, qrImage })
+        throw new Error('Resposta inválida da API - dados vazios')
       }
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error)
-      toast.error('Erro ao gerar QR Code')
+      toast.error(`Erro ao gerar QR Code: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
       setQrCodeData({ bytes: '', image: '' }) // Set empty to show error state
     }
   }

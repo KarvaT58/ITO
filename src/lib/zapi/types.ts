@@ -35,6 +35,9 @@ export type ZApiDeviceResponse = {
 export type ZApiQrResponse = {
   qrCode?: string;
   base64?: string;
+  // A API pode retornar diferentes estruturas
+  value?: string;
+  valor?: string;
 };
 
 export type ZApiPhoneCodeResponse = {
