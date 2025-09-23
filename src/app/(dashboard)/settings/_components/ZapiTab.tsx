@@ -588,12 +588,9 @@ export function ZapiTab() {
                           )}
                         </div>
                         
-                      </div>
-                      
-                      {/* Sistema de horário */}
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <div className="text-center text-sm text-muted-foreground">
-                          <div className="space-y-1">
+                        {/* Sistema de horário - centralizado acima do QR Code */}
+                        <div className="mt-4 mb-4">
+                          <div className="flex justify-center space-x-6 text-sm text-muted-foreground">
                             <div>
                               <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
                             </div>
@@ -602,6 +599,7 @@ export function ZapiTab() {
                             </div>
                           </div>
                         </div>
+                        
                       </div>
                     </CardContent>
                   </Card>
