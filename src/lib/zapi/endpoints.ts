@@ -62,25 +62,25 @@ export const Zapi = {
 
   // Webhooks (individuais)
   updateWebhookDelivery: (ctx: ZApiActionContext, url: string) =>
-    zapiFetch({ ...ctx, path: '/update-webhook-delivery', method: 'PUT', body: { valor: url }}),
+    zapiFetch({ ...ctx, path: '/update-webhook-delivery', method: 'PUT', body: { url }}),
   
   updateWebhookReceived: (ctx: ZApiActionContext, url: string) =>
-    zapiFetch({ ...ctx, path: '/update-webhook-received', method: 'PUT', body: { valor: url }}),
+    zapiFetch({ ...ctx, path: '/update-webhook-received', method: 'PUT', body: { url }}),
   
   updateWebhookReceivedDelivery: (ctx: ZApiActionContext, url: string) =>
-    zapiFetch({ ...ctx, path: '/update-webhook-received-delivery', method: 'PUT', body: { valor: url }}),
+    zapiFetch({ ...ctx, path: '/update-webhook-received-delivery', method: 'PUT', body: { url }}),
   
   updateWebhookDisconnected: (ctx: ZApiActionContext, url: string) =>
-    zapiFetch({ ...ctx, path: '/update-webhook-disconnected', method: 'PUT', body: { valor: url }}),
+    zapiFetch({ ...ctx, path: '/update-webhook-disconnected', method: 'PUT', body: { url }}),
   
   updateWebhookMessageStatus: (ctx: ZApiActionContext, url: string) =>
-    zapiFetch({ ...ctx, path: '/update-webhook-message-status', method: 'PUT', body: { valor: url }}),
+    zapiFetch({ ...ctx, path: '/update-webhook-message-status', method: 'PUT', body: { url }}),
   
   updateWebhookChatPresence: (ctx: ZApiActionContext, url: string) =>
-    zapiFetch({ ...ctx, path: '/update-webhook-chat-presence', method: 'PUT', body: { valor: url }}),
+    zapiFetch({ ...ctx, path: '/update-webhook-chat-presence', method: 'PUT', body: { url }}),
   
   updateWebhookConnected: (ctx: ZApiActionContext, url: string) =>
-    zapiFetch({ ...ctx, path: '/update-webhook-connected', method: 'PUT', body: { valor: url }}),
+    zapiFetch({ ...ctx, path: '/update-webhook-connected', method: 'PUT', body: { url }}),
 
   // Webhooks – todos de uma vez
   updateAllWebhooks: (ctx: ZApiActionContext, url: string, notifySentByMe?: boolean) =>
@@ -88,6 +88,6 @@ export const Zapi = {
       ...ctx,
       path: '/atualizar-todos-webhooks',
       method: 'PUT',
-      body: notifySentByMe == null ? { valor: url } : { valor: url, notifySentByMe }
+      body: notifySentByMe == null ? { url } : { url, notifySentByMe }
     }),
 };
