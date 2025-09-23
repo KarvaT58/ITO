@@ -63,7 +63,6 @@ const translateSupabaseError = (errorMessage: string): string => {
     'Too early': 'Muito cedo para processar',
     'Upgrade required': 'Atualização necessária',
     'Precondition required': 'Pré-condição necessária',
-    'Too many requests': 'Muitas solicitações',
     'Request header fields too large': 'Campos de cabeçalho muito grandes',
     'Unavailable for legal reasons': 'Indisponível por razões legais',
     'Client closed request': 'Cliente fechou a solicitação',
@@ -80,7 +79,6 @@ const translateSupabaseError = (errorMessage: string): string => {
     'Service unavailable': 'Serviço indisponível',
     'Gateway timeout': 'Tempo limite do gateway',
     'HTTP version not supported': 'Versão HTTP não suportada',
-    'Variant also negotiates': 'Variante também negocia',
     'Insufficient storage': 'Armazenamento insuficiente',
     'Loop detected': 'Loop detectado',
     'Not extended': 'Não estendido',
@@ -161,7 +159,8 @@ export function SignupForm({
       console.log('Tentando criar conta com:', { email, name })
       
       // Criar conta no Supabase
-      const { data, error } = await supabase.auth.signUp({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).auth.signUp({
         email: email.trim(),
         password: password,
         options: {

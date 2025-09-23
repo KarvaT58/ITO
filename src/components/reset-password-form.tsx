@@ -63,7 +63,6 @@ const translateSupabaseError = (errorMessage: string): string => {
     'Too early': 'Muito cedo para processar',
     'Upgrade required': 'Atualização necessária',
     'Precondition required': 'Pré-condição necessária',
-    'Too many requests': 'Muitas solicitações',
     'Request header fields too large': 'Campos de cabeçalho muito grandes',
     'Unavailable for legal reasons': 'Indisponível por razões legais',
     'Client closed request': 'Cliente fechou a solicitação',
@@ -80,7 +79,6 @@ const translateSupabaseError = (errorMessage: string): string => {
     'Service unavailable': 'Serviço indisponível',
     'Gateway timeout': 'Tempo limite do gateway',
     'HTTP version not supported': 'Versão HTTP não suportada',
-    'Variant also negotiates': 'Variante também negocia',
     'Insufficient storage': 'Armazenamento insuficiente',
     'Loop detected': 'Loop detectado',
     'Not extended': 'Não estendido',
@@ -116,7 +114,8 @@ export function ResetPasswordForm({
     const checkSession = async () => {
       if (!isClient || !supabase) return
       
-      const { data: { session } } = await supabase.auth.getSession()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: { session } } = await (supabase as any).auth.getSession()
       if (session) {
         setIsValidSession(true)
       } else {
@@ -156,7 +155,8 @@ export function ResetPasswordForm({
 
     try {
       // Atualizar senha no Supabase
-      const { error } = await supabase.auth.updateUser({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).auth.updateUser({
         password: password
       })
 
