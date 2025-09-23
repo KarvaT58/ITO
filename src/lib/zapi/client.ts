@@ -67,26 +67,6 @@ function mapAppBodyToZapi(body: Record<string, unknown>) {
     delete out['url'];
   }
   
-  // Para configurações booleanas: mapear 'enable' para 'valor'
-  if ('enable' in out && !('valor' in out)) {
-    console.log('🔄 Mapping enable to valor:', out['enable']);
-    out['valor'] = !!out['enable'];
-    delete out['enable'];
-  }
-  
-  // Para mensagens: mapear 'message' para 'value'
-  if ('message' in out && !('value' in out)) {
-    console.log('🔄 Mapping message to value:', out['message']);
-    out['value'] = out['message'];
-    delete out['message'];
-  }
-  
-  // Para campos que já têm 'value': manter como está
-  if ('value' in out && !('valor' in out)) {
-    console.log('✅ Keeping existing value:', out['value']);
-    // Não fazer nada, manter 'value'
-  }
-  
   console.log('📤 Mapped payload:', out);
   return out;
 }
