@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 
+// Singleton para evitar múltiplas instâncias
+let supabaseInstance: any = null
+
 export const useSupabase = () => {
   const [supabase, setSupabase] = useState<any>(null)
   const [isClient, setIsClient] = useState(false)
@@ -7,12 +10,18 @@ export const useSupabase = () => {
   useEffect(() => {
     setIsClient(true)
     
+    // Se já temos uma instância, usar ela
+    if (supabaseInstance) {
+      setSupabase(supabaseInstance)
+      return
+    }
+    
     // Lazy load do Supabase apenas no cliente
     const loadSupabase = async () => {
       try {
         // Verificar se estamos no cliente
         if (typeof window === 'undefined') {
-          setSupabase({
+          const mockClient = {
             auth: {
               signUp: () => Promise.resolve({ data: null, error: { message: 'Server-side rendering not supported' } }),
               signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Server-side rendering not supported' } }),
@@ -20,7 +29,8 @@ export const useSupabase = () => {
               updateUser: () => Promise.resolve({ error: { message: 'Server-side rendering not supported' } }),
               getSession: () => Promise.resolve({ data: { session: null } })
             }
-          })
+          }
+          setSupabase(mockClient)
           return
         }
 
@@ -34,13 +44,21 @@ export const useSupabase = () => {
         console.log('Carregando Supabase com URL:', supabaseUrl)
         console.log('Chave anônima:', supabaseAnonKey.substring(0, 20) + '...')
         
-        const client = createClient(supabaseUrl, supabaseAnonKey)
+        const client = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        })
+        
         console.log('Cliente Supabase criado:', client)
+        supabaseInstance = client
         setSupabase(client)
       } catch (error) {
         console.warn('Erro ao carregar Supabase:', error)
         // Retorna mock em caso de erro
-        setSupabase({
+        const mockClient = {
           auth: {
             signUp: () => Promise.resolve({ data: null, error: { message: 'Supabase não disponível' } }),
             signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase não disponível' } }),
@@ -48,7 +66,8 @@ export const useSupabase = () => {
             updateUser: () => Promise.resolve({ error: { message: 'Supabase não disponível' } }),
             getSession: () => Promise.resolve({ data: { session: null } })
           }
-        })
+        }
+        setSupabase(mockClient)
       }
     }
     

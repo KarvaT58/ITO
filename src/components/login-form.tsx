@@ -38,12 +38,25 @@ export function LoginForm({
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
+    console.log('Dados do login:', { email, password: password ? '***' : 'vazio' })
+
+    // Validar se os campos estão preenchidos
+    if (!email || !password) {
+      setError('Email e senha são obrigatórios')
+      setIsLoading(false)
+      return
+    }
+
     try {
+      console.log('Tentando fazer login com:', { email })
+      
       // Fazer login com Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       })
+
+      console.log('Resposta do login:', { data, error })
 
       if (error) {
         setError(error.message)
@@ -78,7 +91,7 @@ export function LoginForm({
       <div className="grid gap-6">
         <div className="grid gap-3">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="seu@email.com" required />
+          <Input id="email" name="email" type="email" placeholder="seu@email.com" required />
         </div>
         <div className="grid gap-3">
           <div className="flex items-center">
@@ -93,6 +106,7 @@ export function LoginForm({
           <div className="relative">
             <Input 
               id="password" 
+              name="password"
               type={showPassword ? "text" : "password"} 
               required 
             />
