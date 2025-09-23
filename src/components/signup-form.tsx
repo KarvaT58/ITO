@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { useSupabase } from "@/hooks/use-supabase"
 
 interface SignupFormProps {
   className?: string;
@@ -18,6 +18,7 @@ export function SignupForm({
   ...props
 }: SignupFormProps) {
   const router = useRouter()
+  const { supabase, isClient } = useSupabase()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -26,6 +27,12 @@ export function SignupForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!isClient || !supabase) {
+      setError('Aguarde o carregamento...')
+      return
+    }
+    
     setIsLoading(true)
     setError(null)
     

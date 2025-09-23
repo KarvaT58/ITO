@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { useSupabase } from "@/hooks/use-supabase"
 
 interface ForgotPasswordFormProps {
   className?: string;
@@ -17,12 +17,19 @@ export function ForgotPasswordForm({
   ...props
 }: ForgotPasswordFormProps) {
   const router = useRouter()
+  const { supabase, isClient } = useSupabase()
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!isClient || !supabase) {
+      setError('Aguarde o carregamento...')
+      return
+    }
+    
     setIsLoading(true)
     setError(null)
     

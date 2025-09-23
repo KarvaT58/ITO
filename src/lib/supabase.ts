@@ -1,23 +1,31 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Função para obter o cliente Supabase apenas no cliente
+// Mock do Supabase para server-side
+const mockSupabase = {
+  auth: {
+    signUp: () => Promise.resolve({ data: null, error: { message: 'Server-side rendering not supported' } }),
+    signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Server-side rendering not supported' } }),
+    resetPasswordForEmail: () => Promise.resolve({ error: { message: 'Server-side rendering not supported' } }),
+    updateUser: () => Promise.resolve({ error: { message: 'Server-side rendering not supported' } }),
+    getSession: () => Promise.resolve({ data: { session: null } })
+  }
+}
+
+// Função para obter o cliente Supabase
 export const getSupabaseClient = () => {
+  // Sempre retorna mock durante build/SSR
   if (typeof window === 'undefined') {
-    // Server-side: retorna um mock
-    return {
-      auth: {
-        signUp: () => Promise.resolve({ data: null, error: { message: 'Server-side rendering not supported' } }),
-        signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Server-side rendering not supported' } }),
-        resetPasswordForEmail: () => Promise.resolve({ error: { message: 'Server-side rendering not supported' } }),
-        updateUser: () => Promise.resolve({ error: { message: 'Server-side rendering not supported' } }),
-        getSession: () => Promise.resolve({ data: { session: null } })
-      }
-    }
+    return mockSupabase
   }
 
   // Client-side: cria o cliente real
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase credentials not found, using mock client')
+    return mockSupabase
+  }
   
   return createClient(supabaseUrl, supabaseAnonKey)
 }
