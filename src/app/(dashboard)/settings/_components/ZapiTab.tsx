@@ -548,6 +548,31 @@ export function ZapiTab() {
                           </Badge>
                         </div>
                         <div className="flex items-center space-x-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Verificar Status
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
+                                <Power className="h-4 w-4 mr-2" />
+                                Reiniciar Instância
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'disconnect')}>
+                                <PowerOff className="h-4 w-4 mr-2" />
+                                Desconectar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openSettingsDialog(instance)}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Configurações
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           <Button
                             variant="outline"
                             size="sm"
@@ -577,51 +602,18 @@ export function ZapiTab() {
                           )}
                         </div>
                         
-                        {/* Menu de ações */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Verificar Status
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
-                              <Power className="h-4 w-4 mr-2" />
-                              Reiniciar Instância
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'disconnect')}>
-                              <PowerOff className="h-4 w-4 mr-2" />
-                              Desconectar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openSettingsDialog(instance)}>
-                              <Settings className="h-4 w-4 mr-2" />
-                              Configurações
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
                       
                       {/* Sistema de horário */}
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <div className="flex items-center space-x-4">
-                            <span>
+                        <div className="text-center text-sm text-muted-foreground">
+                          <div className="space-y-1">
+                            <div>
                               <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
-                            </span>
-                            <span>
+                            </div>
+                            <div>
                               <strong>Atualizada:</strong> {new Date(instance.updated_at).toLocaleString('pt-BR')}
-                            </span>
-                          </div>
-                          <div className="text-xs">
-                            {isConnected ? (
-                              <span className="text-green-600">🟢 Conectado</span>
-                            ) : (
-                              <span className="text-red-600">🔴 Desconectado</span>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </div>
