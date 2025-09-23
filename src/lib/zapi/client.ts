@@ -27,7 +27,15 @@ export async function zapiFetch<T>(args: {
   const res = await fetch(url, init);
   if (res.status === 405) throw new Error('405: Método incorreto (verifique PUT/POST/GET).');
   if (res.status === 415) throw new Error('415: Content-Type ausente/incorreto, use application/json.');
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    try {
+      const errorText = await res.text();
+      const errorMessage = errorText || `Erro ${res.status}`;
+      throw new Error(`${res.status}: ${errorMessage}`);
+    } catch {
+      throw new Error(`${res.status}: Erro na API Z-API`);
+    }
+  }
   return (await res.json()) as T;
 }
 
