@@ -113,6 +113,20 @@ export async function zapiAction(args: {
       return Zapi.updateCallRejectMessage(ctx, (args.payload as { message?: string })?.message ?? '');
     case 'notifySentByMe': 
       return Zapi.updateNotifySentByMe(ctx, !!(args.payload as { enable?: boolean })?.enable);
+    case 'webhookDelivery': 
+      return Zapi.updateWebhookDelivery(ctx, (args.payload as { url?: string })?.url ?? '');
+    case 'webhookReceived': 
+      return Zapi.updateWebhookReceived(ctx, (args.payload as { url?: string })?.url ?? '');
+    case 'webhookReceivedDelivery': 
+      return Zapi.updateWebhookReceivedDelivery(ctx, (args.payload as { url?: string })?.url ?? '');
+    case 'webhookDisconnected': 
+      return Zapi.updateWebhookDisconnected(ctx, (args.payload as { url?: string })?.url ?? '');
+    case 'webhookMessageStatus': 
+      return Zapi.updateWebhookMessageStatus(ctx, (args.payload as { url?: string })?.url ?? '');
+    case 'webhookChatPresence': 
+      return Zapi.updateWebhookChatPresence(ctx, (args.payload as { url?: string })?.url ?? '');
+    case 'webhookConnected': 
+      return Zapi.updateWebhookConnected(ctx, (args.payload as { url?: string })?.url ?? '');
     case 'webhooks:setAllVercel': {
       const urls = buildWebhookUrls();
       await Zapi.updateWebhookDelivery(ctx, urls.delivery);

@@ -335,20 +335,29 @@ export function ZapiTab() {
     if (!selectedInstance) return
     
     try {
+      // Configurações gerais do WhatsApp
       await Promise.all([
         zapiAction({ id: selectedInstance.id, action: 'autoReadMessage', payload: { enable: settingsData.autoReadMessage } }),
         zapiAction({ id: selectedInstance.id, action: 'autoReadStatus', payload: { enable: settingsData.autoReadStatus } }),
         zapiAction({ id: selectedInstance.id, action: 'callRejectAuto', payload: { enable: settingsData.callRejectAuto } }),
         zapiAction({ id: selectedInstance.id, action: 'callRejectMessage', payload: { message: settingsData.callRejectMessage } }),
-        zapiAction({ id: selectedInstance.id, action: 'profileName', payload: { name: settingsData.profileName } }),
-        zapiAction({ id: selectedInstance.id, action: 'profileDescription', payload: { description: settingsData.profileDescription } }),
-        zapiAction({ id: selectedInstance.id, action: 'profilePicture', payload: { url: settingsData.profilePicture } }),
         zapiAction({ id: selectedInstance.id, action: 'notifySentByMe', payload: { enable: settingsData.notifySentByMe } })
       ])
+
+      // Webhooks individuais
+      await Promise.all([
+        zapiAction({ id: selectedInstance.id, action: 'webhookDelivery', payload: { url: settingsData.webhookDelivery } }),
+        zapiAction({ id: selectedInstance.id, action: 'webhookDisconnected', payload: { url: settingsData.webhookDisconnected } }),
+        zapiAction({ id: selectedInstance.id, action: 'webhookReceived', payload: { url: settingsData.webhookReceived } }),
+        zapiAction({ id: selectedInstance.id, action: 'webhookChatPresence', payload: { url: settingsData.webhookChatPresence } }),
+        zapiAction({ id: selectedInstance.id, action: 'webhookMessageStatus', payload: { url: settingsData.webhookMessageStatus } }),
+        zapiAction({ id: selectedInstance.id, action: 'webhookConnected', payload: { url: settingsData.webhookConnected } })
+      ])
       
-      toast.success('Configurações atualizadas')
+      toast.success('Configurações atualizadas com sucesso!')
       setIsSettingsDialogOpen(false)
-    } catch {
+    } catch (error) {
+      console.error('Erro ao atualizar configurações:', error)
       toast.error('Erro ao atualizar configurações')
     }
   }
