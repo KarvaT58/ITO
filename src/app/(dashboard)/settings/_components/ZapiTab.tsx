@@ -152,12 +152,23 @@ export function ZapiTab() {
   const handleShowQrCode = async (instance: ZApiInstance) => {
     setSelectedInstance(instance)
     setIsQrDialogOpen(true)
+    setQrCodeData(null) // Reset previous data
+    
     try {
       const qrBytes = await zapiAction({ id: instance.id, action: 'qrBytes' })
       const qrImage = await zapiAction({ id: instance.id, action: 'qrImage' })
-      setQrCodeData({ bytes: qrBytes as string, image: qrImage as string })
-    } catch {
+      
+      // Validate the responses
+      if (qrBytes && qrImage && typeof qrBytes === 'string' && typeof qrImage === 'string') {
+        setQrCodeData({ bytes: qrBytes, image: qrImage })
+        toast.success('QR Code gerado com sucesso')
+      } else {
+        throw new Error('Resposta inválida da API')
+      }
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error)
       toast.error('Erro ao gerar QR Code')
+      setQrCodeData({ bytes: '', image: '' }) // Set empty to show error state
     }
   }
 
@@ -574,7 +585,7 @@ export function ZapiTab() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {qrCodeData?.image ? (
+            {qrCodeData?.image && qrCodeData.image.trim() !== '' ? (
               <div className="flex flex-col items-center space-y-4">
                 <Image 
                   src={qrCodeData.image} 
@@ -598,7 +609,9 @@ export function ZapiTab() {
               <div className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <QrCode className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">Gerando QR Code...</p>
+                  <p className="text-muted-foreground">
+                    {qrCodeData ? 'Erro ao gerar QR Code' : 'Gerando QR Code...'}
+                  </p>
                 </div>
               </div>
             )}
