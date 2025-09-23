@@ -2,24 +2,21 @@
 
 import * as React from "react"
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
+  MessageCircle,
+  Users,
+  Megaphone,
+  MegaphoneIcon,
+  User,
+  MessageSquare,
+  Users2,
+  Workflow,
+  BarChart3,
+  BarChart,
+  Settings,
+  HelpCircle,
+  Layers,
+} from "lucide-react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -41,111 +38,68 @@ const data = {
   },
   navMain: [
     {
-      title: "Painel",
+      title: "Chat WhatsApp",
       url: "#",
-      icon: IconDashboard,
+      icon: MessageCircle,
     },
     {
-      title: "Ciclo de Vida",
+      title: "Grupos WhatsApp",
       url: "#",
-      icon: IconListDetails,
+      icon: Users,
     },
     {
-      title: "Análises",
+      title: "Campanhas Contatos",
       url: "#",
-      icon: IconChartBar,
+      icon: Megaphone,
     },
     {
-      title: "Projetos",
+      title: "Campanhas Grupos",
       url: "#",
-      icon: IconFolder,
+      icon: MegaphoneIcon,
     },
     {
-      title: "Equipe",
+      title: "Contatos",
       url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Captura",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Propostas Ativas",
-          url: "#",
-        },
-        {
-          title: "Arquivadas",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposta",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Propostas Ativas",
-          url: "#",
-        },
-        {
-          title: "Arquivadas",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Propostas Ativas",
-          url: "#",
-        },
-        {
-          title: "Arquivadas",
-          url: "#",
-        },
-      ],
+      icon: User,
     },
   ],
   navSecondary: [
     {
+      title: "Chat Interno",
+      url: "#",
+      icon: MessageSquare,
+    },
+    {
+      title: "Equipe",
+      url: "#",
+      icon: Users2,
+    },
+    {
+      title: "N8N",
+      url: "#",
+      icon: Workflow,
+    },
+    {
+      title: "Relatórios",
+      url: "#",
+      icon: BarChart3,
+    },
+    {
+      title: "Relatórios Campanhas",
+      url: "#",
+      icon: BarChart,
+    },
+  ],
+  navFooter: [
+    {
       title: "Configurações",
       url: "#",
-      icon: IconSettings,
+      icon: Settings,
     },
     {
       title: "Ajuda",
       url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Pesquisar",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Biblioteca de Dados",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Relatórios",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Assistente de Texto",
-      url: "#",
-      icon: IconFileWord,
+      icon: HelpCircle,
     },
   ],
 }
@@ -161,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <Layers className="!size-5" />
                 <span className="text-base font-semibold">ITO Sistemas</span>
               </a>
             </SidebarMenuButton>
@@ -170,8 +124,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary items={data.navSecondary} />
+        <NavSecondary items={data.navFooter} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
