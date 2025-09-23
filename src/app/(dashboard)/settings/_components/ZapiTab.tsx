@@ -590,13 +590,8 @@ export function ZapiTab() {
                         
                         {/* Sistema de horário - centralizado acima do QR Code */}
                         <div className="mt-4 mb-4">
-                          <div className="flex justify-center space-x-6 text-sm text-muted-foreground">
-                            <div>
-                              <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
-                            </div>
-                            <div>
-                              <strong>Atualizada:</strong> {new Date(instance.updated_at).toLocaleString('pt-BR')}
-                            </div>
+                          <div className="text-center text-sm text-muted-foreground">
+                            <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
                           </div>
                         </div>
                         
