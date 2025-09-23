@@ -21,14 +21,14 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      <div className="bg-muted relative hidden lg:block">
-        <Image
-          src="/placeholder.svg"
-          alt="Image"
-          fill
-          className="object-cover dark:brightness-[0.2] dark:grayscale"
-        />
-      </div>
+            <div className="bg-muted relative hidden lg:block">
+              <Image
+                src="/whatsapp-ai.svg"
+                alt="WhatsApp Business com IA - Gestão Automática de Conversas"
+                fill
+                className="object-cover dark:brightness-[0.2] dark:grayscale"
+              />
+            </div>
     </div>
   )
 }

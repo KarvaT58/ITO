@@ -1,0 +1,39 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f8f9fa"/>
+  
+  <!-- WhatsApp Logo Circle -->
+  <circle cx="200" cy="120" r="50" fill="#25D366"/>
+  
+  <!-- WhatsApp Phone Icon -->
+  <path d="M185 110 L215 110 L215 130 L185 130 Z" fill="white"/>
+  <path d="M190 115 L210 115 L210 125 L190 125 Z" fill="#25D366"/>
+  <circle cx="200" cy="120" r="3" fill="white"/>
+  
+  <!-- AI Brain Icon -->
+  <circle cx="200" cy="120" r="25" fill="white" stroke="#25D366" stroke-width="2"/>
+  <path d="M190 110 Q200 100 210 110 Q200 120 190 110" fill="#25D366"/>
+  <circle cx="195" cy="115" r="2" fill="white"/>
+  <circle cx="205" cy="115" r="2" fill="white"/>
+  
+  <!-- Title -->
+  <text x="200" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333">
+    WhatsApp Business
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="200" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#666">
+    Inteligência Artificial
+  </text>
+  
+  <!-- Features -->
+  <text x="200" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#888">
+    Gestão Automática de Conversas
+  </text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="50" cy="50" r="3" fill="#25D366" opacity="0.3"/>
+  <circle cx="350" cy="80" r="2" fill="#25D366" opacity="0.3"/>
+  <circle cx="80" cy="250" r="2" fill="#25D366" opacity="0.3"/>
+  <circle cx="320" cy="220" r="3" fill="#25D366" opacity="0.3"/>
+</svg>
