@@ -360,12 +360,17 @@ export function ZapiTab() {
     
     setIsSavingSettings(true)
     
+    // Fechar o formulário imediatamente
+    setIsSettingsDialogOpen(false)
+    
     try {
       console.log('Iniciando atualização de configurações para:', selectedInstance.alias)
       console.log('Dados de configuração:', settingsData)
       
       toast.loading('Conectando Webhooks e Configurações!', {
-        id: 'saving-settings'
+        id: 'saving-settings',
+        position: 'top-center',
+        duration: 0 // Não desaparece automaticamente
       })
       
       // Configurações gerais do WhatsApp - executar sequencialmente para evitar conflitos
@@ -434,13 +439,17 @@ export function ZapiTab() {
       }
 
       toast.dismiss('saving-settings')
-      toast.success('Configurações atualizadas com sucesso!')
+      toast.success('Configurações atualizadas com sucesso!', {
+        position: 'top-center'
+      })
       setIsSettingsDialogOpen(false)
       loadInstances()
     } catch (error) {
       console.error('Erro ao atualizar configurações:', error)
       toast.dismiss('saving-settings')
-      toast.error(`Erro ao atualizar configurações: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+      toast.error(`Erro ao atualizar configurações: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, {
+        position: 'top-center'
+      })
     } finally {
       setIsSavingSettings(false)
     }
