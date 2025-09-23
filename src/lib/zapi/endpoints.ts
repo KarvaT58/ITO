@@ -56,9 +56,9 @@ export const Zapi = {
   updateNotifySentByMe: (ctx: ZApiActionContext, enable: boolean) =>
     zapiFetch({ ...ctx, path: '/update-notify-sent-by-me', method: 'PUT', body: { notifySentByMe: enable }}),
 
-  // Me (dados da instância)
-  me: (ctx: ZApiActionContext) => 
-    zapiFetch({ ...ctx, path: '/me', method: 'GET' }),
+  // Me (dados da instância) - REMOVIDO: endpoint não existe na ZAPI
+  // me: (ctx: ZApiActionContext) => 
+  //   zapiFetch({ ...ctx, path: '/me', method: 'GET' }),
 
   // Webhooks (individuais)
   updateWebhookDelivery: (ctx: ZApiActionContext, url: string) =>

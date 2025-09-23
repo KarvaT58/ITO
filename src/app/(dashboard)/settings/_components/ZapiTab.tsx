@@ -184,6 +184,36 @@ export function ZapiTab() {
     }
   }
 
+  const testZapiConfigurations = async (instanceId: string) => {
+    try {
+      console.log('🧪 [TESTE] ===== TESTANDO CONFIGURAÇÕES DA ZAPI =====')
+      
+      // Testar cada configuração individualmente
+      const tests = [
+        { name: 'autoReadMessage', action: 'autoReadMessage', payload: { valor: true } },
+        { name: 'autoReadStatus', action: 'autoReadStatus', payload: { valor: true } },
+        { name: 'callRejectAuto', action: 'callRejectAuto', payload: { valor: true } },
+        { name: 'notifySentByMe', action: 'notifySentByMe', payload: { notifySentByMe: true } }
+      ]
+      
+      for (const test of tests) {
+        console.log(`🧪 [TESTE] Testando ${test.name}...`)
+        try {
+          const result = await zapiAction({ id: instanceId, action: test.action, payload: test.payload })
+          console.log(`✅ [TESTE] ${test.name} - Resposta:`, result)
+        } catch (error) {
+          console.error(`❌ [TESTE] ${test.name} - Erro:`, error)
+        }
+      }
+      
+      console.log('🧪 [TESTE] ===== FIM TESTE CONFIGURAÇÕES =====')
+      toast.success('Teste de configurações executado - veja o console', { position: 'bottom-right' })
+    } catch (error) {
+      console.error('Erro ao testar configurações:', error)
+      toast.error('Erro ao testar configurações', { position: 'bottom-right' })
+    }
+  }
+
   const handleZapiAction = async (instanceId: string, action: string, payload?: unknown) => {
     try {
       console.log(`Executando ação ${action} para instância ${instanceId}`)
@@ -652,6 +682,10 @@ export function ZapiTab() {
                                 <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
                                   <Settings className="h-4 w-4 mr-2" />
                                   Verificar Status Detalhado
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => testZapiConfigurations(instance.id)}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Testar Configurações
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
                                   <Power className="h-4 w-4 mr-2" />
