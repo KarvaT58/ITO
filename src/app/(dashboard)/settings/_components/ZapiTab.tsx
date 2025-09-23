@@ -206,6 +206,11 @@ export function ZapiTab() {
           toast.success('Instância desconectada com sucesso', { position: 'bottom-right' })
           setInstanceStatus(prev => ({ ...prev, [instanceId]: { connected: false } }))
           break
+        case 'me':
+          console.log('🔍 [DEBUG] ===== CONFIGURAÇÕES ATUAIS DA ZAPI =====')
+          console.log('🔍 [DEBUG] Resposta completa da ZAPI:', result)
+          toast.success('Configurações verificadas - veja o console', { position: 'bottom-right' })
+          break
         default:
           toast.success('Ação executada com sucesso', { position: 'bottom-right' })
       }
@@ -645,6 +650,10 @@ export function ZapiTab() {
                                 <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'status')}>
                                   <RefreshCw className="h-4 w-4 mr-2" />
                                   Verificar Status
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'me')}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Verificar Configurações
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleZapiAction(instance.id, 'restart')}>
                                   <Power className="h-4 w-4 mr-2" />
