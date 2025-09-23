@@ -48,6 +48,8 @@ export function ZapiTab() {
   const [instanceStatus, setInstanceStatus] = useState<Record<string, unknown>>({})
   const [qrCodeData, setQrCodeData] = useState<{ bytes?: string; image?: string } | null>(null)
   const [qrPollingInterval, setQrPollingInterval] = useState<NodeJS.Timeout | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [instanceToDelete, setInstanceToDelete] = useState<ZApiInstance | null>(null)
 
   // Form states
   const [formData, setFormData] = useState({
@@ -133,13 +135,20 @@ export function ZapiTab() {
     }
   }
 
-  const handleDeleteInstance = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar esta instância?')) return
+  const handleDeleteInstance = async (instance: ZApiInstance) => {
+    setInstanceToDelete(instance)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteInstance = async () => {
+    if (!instanceToDelete) return
     
     try {
-      await deleteZapiInstance(id)
+      await deleteZapiInstance(instanceToDelete.id)
       toast.success('Instância deletada com sucesso')
       loadInstances()
+      setIsDeleteDialogOpen(false)
+      setInstanceToDelete(null)
     } catch {
       toast.error('Erro ao deletar instância')
     }
@@ -454,7 +463,7 @@ export function ZapiTab() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDeleteInstance(instance.id)}
+                            onClick={() => handleDeleteInstance(instance)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -723,6 +732,38 @@ export function ZapiTab() {
                 </p>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja deletar a instância <strong>&ldquo;{instanceToDelete?.alias}&rdquo;</strong>?
+              <br />
+              <span className="text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setInstanceToDelete(null)
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteInstance}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Deletar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
