@@ -46,6 +46,7 @@ export function ZapiTab() {
   const [selectedInstance, setSelectedInstance] = useState<ZApiInstance | null>(null)
   const [instanceStatus, setInstanceStatus] = useState<Record<string, unknown>>({})
   const [qrCodeData, setQrCodeData] = useState<{ bytes?: string; image?: string } | null>(null)
+  const [qrPollingInterval, setQrPollingInterval] = useState<NodeJS.Timeout | null>(null)
 
   // Form states
   const [formData, setFormData] = useState({
@@ -70,6 +71,25 @@ export function ZapiTab() {
     loadInstances()
     loadWebhookEvents()
   }, [])
+
+  // Limpar polling quando o diálogo for fechado
+  useEffect(() => {
+    if (!isQrDialogOpen) {
+      if (qrPollingInterval) {
+        clearInterval(qrPollingInterval)
+        setQrPollingInterval(null)
+      }
+    }
+  }, [isQrDialogOpen, qrPollingInterval])
+
+  // Limpar polling quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (qrPollingInterval) {
+        clearInterval(qrPollingInterval)
+      }
+    }
+  }, [qrPollingInterval])
 
   const loadInstances = async () => {
     try {
@@ -178,6 +198,9 @@ export function ZapiTab() {
       if (qrBytes && qrImage && qrBytes.trim() !== '' && qrImage.trim() !== '') {
         setQrCodeData({ bytes: qrBytes, image: qrImage })
         toast.success('QR Code gerado com sucesso')
+        
+        // Iniciar polling para verificar conexão
+        startQrPolling(instance.id)
       } else {
         console.error('Dados inválidos extraídos:', { qrBytes, qrImage })
         throw new Error('Resposta inválida da API - dados vazios')
@@ -204,6 +227,54 @@ export function ZapiTab() {
       link.click()
     }
   }
+
+  const checkConnectionStatus = async (instanceId: string) => {
+    try {
+      const status = await zapiAction({ id: instanceId, action: 'status' })
+      const statusData = status as { connected?: boolean } | undefined
+      
+      if (statusData?.connected) {
+        // WhatsApp conectado! Fechar diálogo e atualizar status
+        setIsQrDialogOpen(false)
+        setQrCodeData(null)
+        setSelectedInstance(null)
+        
+        // Limpar polling
+        if (qrPollingInterval) {
+          clearInterval(qrPollingInterval)
+          setQrPollingInterval(null)
+        }
+        
+        // Atualizar status da instância
+        setInstanceStatus(prev => ({
+          ...prev,
+          [instanceId]: statusData
+        }))
+        
+        // Recarregar lista de instâncias para atualizar UI
+        loadInstances()
+        
+        toast.success('WhatsApp conectado com sucesso!')
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status da conexão:', error)
+    }
+  }
+
+  const startQrPolling = (instanceId: string) => {
+    // Limpar polling anterior se existir
+    if (qrPollingInterval) {
+      clearInterval(qrPollingInterval)
+    }
+    
+    // Verificar status a cada 3 segundos
+    const interval = setInterval(() => {
+      checkConnectionStatus(instanceId)
+    }, 3000)
+    
+    setQrPollingInterval(interval)
+  }
+
 
   const openSettingsDialog = async (instance: ZApiInstance) => {
     setSelectedInstance(instance)
@@ -630,6 +701,21 @@ export function ZapiTab() {
                     {qrCodeData ? 'Erro ao gerar QR Code' : 'Gerando QR Code...'}
                   </p>
                 </div>
+              </div>
+            )}
+            
+            {/* Indicador de aguardando conexão */}
+            {qrCodeData?.image && qrCodeData.image.trim() !== '' && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <p className="text-sm text-blue-700">
+                    Aguardando conexão do WhatsApp...
+                  </p>
+                </div>
+                <p className="text-xs text-blue-600 mt-1 text-center">
+                  Escaneie o QR Code com seu WhatsApp. A tela fechará automaticamente quando conectar.
+                </p>
               </div>
             )}
           </div>
