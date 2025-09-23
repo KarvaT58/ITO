@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export function LoginForm({
   className,
@@ -15,16 +16,39 @@ export function LoginForm({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
     
-    // Simular autenticação (você pode substituir por sua lógica de autenticação real)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Redirecionar para o dashboard
-    router.push("/dashboard")
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    try {
+      // Fazer login com Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        setError(error.message)
+        setIsLoading(false)
+        return
+      }
+
+      if (data.user) {
+        // Redirecionar para o dashboard
+        router.push("/dashboard")
+      }
+    } catch (err) {
+      setError('Erro ao fazer login. Tente novamente.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -35,6 +59,11 @@ export function LoginForm({
           Digite seu email abaixo para fazer login em sua conta
         </p>
       </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
       <div className="grid gap-6">
         <div className="grid gap-3">
           <Label htmlFor="email">Email</Label>

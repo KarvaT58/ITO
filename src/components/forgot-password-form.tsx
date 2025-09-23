@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 export function ForgotPasswordForm({
   className,
@@ -14,16 +15,34 @@ export function ForgotPasswordForm({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
     
-    // Simular envio de email de recuperação
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    setEmailSent(true)
-    setIsLoading(false)
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+
+    try {
+      // Enviar email de recuperação de senha
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+
+      if (error) {
+        setError(error.message)
+        setIsLoading(false)
+        return
+      }
+
+      setEmailSent(true)
+    } catch (err) {
+      setError('Erro ao enviar email de recuperação. Tente novamente.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (emailSent) {
@@ -36,9 +55,9 @@ export function ForgotPasswordForm({
             </svg>
           </div>
           <h1 className="text-2xl font-bold">Email enviado!</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Enviamos um link de recuperação para seu email. Verifique sua caixa de entrada.
-          </p>
+        <p className="text-muted-foreground text-sm text-balance">
+          Enviamos um link de recuperação para seu email. Verifique sua caixa de entrada e clique no link para redefinir sua senha.
+        </p>
         </div>
         <Button 
           onClick={() => router.push("/login")} 
@@ -58,6 +77,11 @@ export function ForgotPasswordForm({
           Digite seu email e enviaremos um link para redefinir sua senha
         </p>
       </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
       <div className="grid gap-6">
         <div className="grid gap-3">
           <Label htmlFor="email">Email</Label>

@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
-export function SignupForm({
+export function ResetPasswordForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
@@ -19,6 +19,20 @@ export function SignupForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [isValidSession, setIsValidSession] = useState(false)
+
+  useEffect(() => {
+    // Verificar se há uma sessão válida para redefinir senha
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setIsValidSession(true)
+      } else {
+        setError('Link inválido ou expirado. Solicite um novo link de recuperação.')
+      }
+    }
+    checkSession()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -26,10 +40,8 @@ export function SignupForm({
     setError(null)
     
     const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
     const password = formData.get('password') as string
     const confirmPassword = formData.get('confirmPassword') as string
-    const name = formData.get('name') as string
 
     // Validar se as senhas coincidem
     if (password !== confirmPassword) {
@@ -38,16 +50,16 @@ export function SignupForm({
       return
     }
 
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      // Criar conta no Supabase
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-          }
-        }
+      // Atualizar senha no Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: password
       })
 
       if (error) {
@@ -56,11 +68,9 @@ export function SignupForm({
         return
       }
 
-      if (data.user) {
-        setSuccess(true)
-      }
+      setSuccess(true)
     } catch (err) {
-      setError('Erro ao criar conta. Tente novamente.')
+      setError('Erro ao redefinir senha. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
@@ -75,9 +85,9 @@ export function SignupForm({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold">Conta criada com sucesso!</h1>
+          <h1 className="text-2xl font-bold">Senha redefinida!</h1>
           <p className="text-muted-foreground text-sm text-balance">
-            Enviamos um link de confirmação para seu email. Verifique sua caixa de entrada e clique no link para ativar sua conta.
+            Sua senha foi redefinida com sucesso. Agora você pode fazer login com sua nova senha.
           </p>
         </div>
         <Button 
@@ -90,12 +100,36 @@ export function SignupForm({
     )
   }
 
+  if (!isValidSession) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="bg-red-100 text-red-600 p-3 rounded-full">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold">Link inválido</h1>
+          <p className="text-muted-foreground text-sm text-balance">
+            Este link de recuperação é inválido ou expirou. Solicite um novo link.
+          </p>
+        </div>
+        <Button 
+          onClick={() => router.push("/forgot-password")} 
+          className="w-full"
+        >
+          Solicitar novo link
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Criar sua conta</h1>
+        <h1 className="text-2xl font-bold">Redefinir senha</h1>
         <p className="text-muted-foreground text-sm text-balance">
-          Preencha os dados abaixo para criar sua conta
+          Digite sua nova senha abaixo
         </p>
       </div>
       {error && (
@@ -105,20 +139,13 @@ export function SignupForm({
       )}
       <div className="grid gap-6">
         <div className="grid gap-3">
-          <Label htmlFor="name">Nome completo</Label>
-          <Input id="name" type="text" placeholder="Seu nome completo" required />
-        </div>
-        <div className="grid gap-3">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="seu@email.com" required />
-        </div>
-        <div className="grid gap-3">
-          <Label htmlFor="password">Senha</Label>
+          <Label htmlFor="password">Nova senha</Label>
           <div className="relative">
             <Input 
               id="password" 
+              name="password"
               type={showPassword ? "text" : "password"} 
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Mínimo 6 caracteres"
               required 
             />
             <button
@@ -135,10 +162,11 @@ export function SignupForm({
           </div>
         </div>
         <div className="grid gap-3">
-          <Label htmlFor="confirmPassword">Confirmar senha</Label>
+          <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
           <div className="relative">
             <Input 
               id="confirmPassword" 
+              name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"} 
               placeholder="Digite a senha novamente"
               required 
@@ -157,38 +185,12 @@ export function SignupForm({
           </div>
         </div>
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Criando conta..." : "Criar conta"}
-        </Button>
-        <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-          <span className="bg-background text-muted-foreground relative z-10 px-2">
-            Ou continue com
-          </span>
-        </div>
-        <Button variant="outline" className="w-full">
-          <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-            <path
-              fill="currentColor"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="currentColor"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="currentColor"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            />
-            <path
-              fill="currentColor"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
-          </svg>
-          Cadastrar com Google
+          {isLoading ? "Redefinindo..." : "Redefinir senha"}
         </Button>
         <div className="text-center text-sm">
-          Já tem uma conta?{" "}
+          Lembrou da senha?{" "}
           <a href="/login" className="underline underline-offset-4">
-            Faça login
+            Voltar ao login
           </a>
         </div>
       </div>
