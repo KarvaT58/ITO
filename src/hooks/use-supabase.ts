@@ -32,8 +32,10 @@ export const useSupabase = () => {
         const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZHp2ZnBuc2ZrbXN3YWVqYXZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5ODY1OTgsImV4cCI6MjA3MzU2MjU5OH0.4jJ2RHRaC32ewUdfCFlUkm0NHLsOFNcLzgkwHikPQUo'
         
         console.log('Carregando Supabase com URL:', supabaseUrl)
+        console.log('Chave anônima:', supabaseAnonKey.substring(0, 20) + '...')
         
         const client = createClient(supabaseUrl, supabaseAnonKey)
+        console.log('Cliente Supabase criado:', client)
         setSupabase(client)
       } catch (error) {
         console.warn('Erro ao carregar Supabase:', error)

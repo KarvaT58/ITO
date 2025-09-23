@@ -42,35 +42,62 @@ export function SignupForm({
     const confirmPassword = formData.get('confirmPassword') as string
     const name = formData.get('name') as string
 
-    // Validar se as senhas coincidem
+    // Validações mais robustas
+    if (!email || !password || !name) {
+      setError('Todos os campos são obrigatórios')
+      setIsLoading(false)
+      return
+    }
+
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres')
+      setIsLoading(false)
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('As senhas não coincidem')
       setIsLoading(false)
       return
     }
 
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Digite um email válido')
+      setIsLoading(false)
+      return
+    }
+
     try {
+      console.log('Tentando criar conta com:', { email, name })
+      
       // Criar conta no Supabase
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: email.trim(),
+        password: password,
         options: {
           data: {
-            full_name: name,
+            full_name: name.trim(),
           }
         }
       })
 
+      console.log('Resposta do Supabase:', { data, error })
+
       if (error) {
+        console.error('Erro do Supabase:', error)
         setError(error.message)
         setIsLoading(false)
         return
       }
 
       if (data.user) {
+        console.log('Usuário criado:', data.user)
         setSuccess(true)
       }
-    } catch {
+    } catch (err) {
+      console.error('Erro geral:', err)
       setError('Erro ao criar conta. Tente novamente.')
     } finally {
       setIsLoading(false)
