@@ -122,10 +122,14 @@ export function ForgotPasswordForm({
     const email = formData.get('email') as string
 
     try {
+      console.log('Tentando enviar email de recuperação para:', email)
+      
       // Enviar email de recuperação de senha
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `http://localhost:3000/reset-password`,
       })
+
+      console.log('Resposta do resetPasswordForEmail:', { error })
 
       if (error) {
         const translatedError = translateSupabaseError(error.message)
