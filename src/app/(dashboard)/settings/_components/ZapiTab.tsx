@@ -25,9 +25,7 @@ import {
   QrCode,
   Download,
   Copy,
-  MoreVertical,
-  CheckCircle,
-  XCircle
+  MoreVertical
 } from "lucide-react"
 import { ZApiInstance } from "@/lib/zapi/types"
 import { 
@@ -570,13 +568,6 @@ export function ZapiTab() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => openSettingsDialog(instance)}
-                          >
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
                             onClick={() => handleDeleteInstance(instance)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -601,21 +592,6 @@ export function ZapiTab() {
                               QR Code
                             </Button>
                           )}
-                          
-                          {/* Status visual */}
-                          <div className="flex items-center space-x-1">
-                            {isConnected ? (
-                              <>
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span className="text-sm text-green-600">Online</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="h-4 w-4 text-red-500" />
-                                <span className="text-sm text-red-600">Offline</span>
-                              </>
-                            )}
-                          </div>
                         </div>
                         
                         {/* Menu de ações */}
@@ -644,6 +620,27 @@ export function ZapiTab() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
+                      </div>
+                      
+                      {/* Sistema de horário */}
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div className="flex items-center space-x-4">
+                            <span>
+                              <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
+                            </span>
+                            <span>
+                              <strong>Atualizada:</strong> {new Date(instance.updated_at).toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                          <div className="text-xs">
+                            {isConnected ? (
+                              <span className="text-green-600">🟢 Conectado</span>
+                            ) : (
+                              <span className="text-red-600">🔴 Desconectado</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
