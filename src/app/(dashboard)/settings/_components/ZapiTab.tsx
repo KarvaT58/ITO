@@ -607,166 +607,21 @@ export function ZapiTab() {
       <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-xl font-semibold">Configurações da Instância</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Webhooks e configurações gerais</DialogTitle>
             <DialogDescription className="text-base text-muted-foreground">
-              Configure as opções da instância <strong>&ldquo;{selectedInstance?.alias}&rdquo;</strong>
+              Configure webhooks para sua instância permite que você receba eventos dela.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-8">
-            {/* Leitura Automática */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-foreground border-b pb-2">Leitura Automática</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="autoReadMessage" className="text-sm font-medium text-foreground">
-                        Leitura Automática de Mensagens
-                      </Label>
-                    </div>
-                    <Switch
-                      id="autoReadMessage"
-                      checked={settingsData.autoReadMessage}
-                      onCheckedChange={(checked) => 
-                        setSettingsData(prev => ({ ...prev, autoReadMessage: checked }))
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="autoReadStatus" className="text-sm font-medium text-foreground">
-                        Leitura Automática de Status
-                      </Label>
-                    </div>
-                    <Switch
-                      id="autoReadStatus"
-                      checked={settingsData.autoReadStatus}
-                      onCheckedChange={(checked) => 
-                        setSettingsData(prev => ({ ...prev, autoReadStatus: checked }))
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Rejeição de Chamadas */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-foreground border-b pb-2">Rejeição de Chamadas</h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="callRejectAuto" className="text-sm font-medium text-foreground">
-                      Rejeitar Chamadas Automaticamente
-                    </Label>
-                  </div>
-                  <Switch
-                    id="callRejectAuto"
-                    checked={settingsData.callRejectAuto}
-                    onCheckedChange={(checked) => 
-                      setSettingsData(prev => ({ ...prev, callRejectAuto: checked }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="callRejectMessage" className="text-sm font-medium text-foreground">
-                    Mensagem de Rejeição
-                  </Label>
-                  <Input
-                    id="callRejectMessage"
-                    value={settingsData.callRejectMessage}
-                    onChange={(e) => 
-                      setSettingsData(prev => ({ ...prev, callRejectMessage: e.target.value }))
-                    }
-                    placeholder="Ex: Desculpe, não posso atender no momento. Envie uma mensagem!"
-                    className="h-11"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Perfil */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-foreground border-b pb-2">Perfil do WhatsApp</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="profileName" className="text-sm font-medium text-foreground">
-                    Nome do Perfil
-                  </Label>
-                  <Input
-                    id="profileName"
-                    value={settingsData.profileName}
-                    onChange={(e) => 
-                      setSettingsData(prev => ({ ...prev, profileName: e.target.value }))
-                    }
-                    placeholder="Ex: Suporte Técnico, Loja Online..."
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="profileDescription" className="text-sm font-medium text-foreground">
-                    Descrição do Perfil
-                  </Label>
-                  <Input
-                    id="profileDescription"
-                    value={settingsData.profileDescription}
-                    onChange={(e) => 
-                      setSettingsData(prev => ({ ...prev, profileDescription: e.target.value }))
-                    }
-                    placeholder="Ex: Atendimento 24h, Suporte técnico..."
-                    className="h-11"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="profilePicture" className="text-sm font-medium text-foreground">
-                  URL da Foto do Perfil
-                </Label>
-                <Input
-                  id="profilePicture"
-                  value={settingsData.profilePicture}
-                  onChange={(e) => 
-                    setSettingsData(prev => ({ ...prev, profilePicture: e.target.value }))
-                  }
-                  placeholder="https://exemplo.com/foto-perfil.jpg"
-                  className="h-11"
-                />
-              </div>
-            </div>
-
-            {/* Notificações */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-foreground border-b pb-2">Notificações</h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="notifySentByMe" className="text-sm font-medium text-foreground">
-                      Notificar todas as mensagens enviadas por mim
-                    </Label>
-                  </div>
-                  <Switch
-                    id="notifySentByMe"
-                    checked={settingsData.notifySentByMe}
-                    onCheckedChange={(checked) => 
-                      setSettingsData(prev => ({ ...prev, notifySentByMe: checked }))
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Webhooks */}
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-foreground border-b pb-2">Configuração de Webhooks</h4>
-              <p className="text-sm text-muted-foreground">Configure os webhooks para receber eventos em tempo real</p>
+              <h4 className="text-lg font-medium text-foreground border-b pb-2">Configurar webhooks</h4>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="webhookDelivery" className="text-sm font-medium text-foreground">
-                    📤 Entrega de Mensagens
+                    No envio
                   </Label>
                   <Input
                     id="webhookDelivery"
@@ -780,38 +635,8 @@ export function ZapiTab() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookReceived" className="text-sm font-medium text-foreground">
-                    📥 Mensagens Recebidas
-                  </Label>
-                  <Input
-                    id="webhookReceived"
-                    value={settingsData.webhookReceived}
-                    onChange={(e) => 
-                      setSettingsData(prev => ({ ...prev, webhookReceived: e.target.value }))
-                    }
-                    placeholder="https://ito-two.vercel.app/api/zapi/webhooks/received"
-                    className="h-11"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="webhookReceivedDelivery" className="text-sm font-medium text-foreground">
-                    📨 Entrega de Mensagens Recebidas
-                  </Label>
-                  <Input
-                    id="webhookReceivedDelivery"
-                    value={settingsData.webhookReceivedDelivery}
-                    onChange={(e) => 
-                      setSettingsData(prev => ({ ...prev, webhookReceivedDelivery: e.target.value }))
-                    }
-                    placeholder="https://ito-two.vercel.app/api/zapi/webhooks/received"
-                    className="h-11"
-                  />
-                </div>
-                
-                <div className="space-y-2">
                   <Label htmlFor="webhookDisconnected" className="text-sm font-medium text-foreground">
-                    🔌 Desconexão
+                    Ao desconectar
                   </Label>
                   <Input
                     id="webhookDisconnected"
@@ -825,23 +650,23 @@ export function ZapiTab() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookMessageStatus" className="text-sm font-medium text-foreground">
-                    ⚡ Status das Mensagens
+                  <Label htmlFor="webhookReceived" className="text-sm font-medium text-foreground">
+                    Ao receber
                   </Label>
                   <Input
-                    id="webhookMessageStatus"
-                    value={settingsData.webhookMessageStatus}
+                    id="webhookReceived"
+                    value={settingsData.webhookReceived}
                     onChange={(e) => 
-                      setSettingsData(prev => ({ ...prev, webhookMessageStatus: e.target.value }))
+                      setSettingsData(prev => ({ ...prev, webhookReceived: e.target.value }))
                     }
-                    placeholder="https://ito-two.vercel.app/api/zapi/webhooks/status"
+                    placeholder="https://ito-two.vercel.app/api/zapi/webhooks/received"
                     className="h-11"
                   />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="webhookChatPresence" className="text-sm font-medium text-foreground">
-                    📍 Presença no Chat
+                    Presença no chat
                   </Label>
                   <Input
                     id="webhookChatPresence"
@@ -855,8 +680,23 @@ export function ZapiTab() {
                 </div>
                 
                 <div className="space-y-2">
+                  <Label htmlFor="webhookMessageStatus" className="text-sm font-medium text-foreground">
+                    Status da mensagem recebida
+                  </Label>
+                  <Input
+                    id="webhookMessageStatus"
+                    value={settingsData.webhookMessageStatus}
+                    onChange={(e) => 
+                      setSettingsData(prev => ({ ...prev, webhookMessageStatus: e.target.value }))
+                    }
+                    placeholder="https://ito-two.vercel.app/api/zapi/webhooks/status"
+                    className="h-11"
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="webhookConnected" className="text-sm font-medium text-foreground">
-                    ✅ Conexão
+                    Ao conectar
                   </Label>
                   <Input
                     id="webhookConnected"
@@ -869,11 +709,90 @@ export function ZapiTab() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Notificar todas as mensagens enviadas por mim */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="notifySentByMe" className="text-sm font-medium text-foreground">
+                    Notificar todas as mensagens enviadas por mim
+                  </Label>
+                </div>
+                <Switch
+                  id="notifySentByMe"
+                  checked={settingsData.notifySentByMe}
+                  onCheckedChange={(checked) => 
+                    setSettingsData(prev => ({ ...prev, notifySentByMe: checked }))
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Configurações do WhatsApp */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-medium text-foreground border-b pb-2">Configurações do WhatsApp</h4>
               
-              <div className="mt-4 p-4 bg-muted border rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  <strong>💡 Dica:</strong> Use o botão &ldquo;Webhooks Vercel&rdquo; para configurar todos os webhooks automaticamente com as URLs corretas.
-                </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="callRejectAuto" className="text-sm font-medium text-foreground">
+                      Rejeitar chamadas automaticamente
+                    </Label>
+                  </div>
+                  <Switch
+                    id="callRejectAuto"
+                    checked={settingsData.callRejectAuto}
+                    onCheckedChange={(checked) => 
+                      setSettingsData(prev => ({ ...prev, callRejectAuto: checked }))
+                    }
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="callRejectMessage" className="text-sm font-medium text-foreground">
+                    Mensagem de rejeição
+                  </Label>
+                  <Input
+                    id="callRejectMessage"
+                    value={settingsData.callRejectMessage}
+                    onChange={(e) => 
+                      setSettingsData(prev => ({ ...prev, callRejectMessage: e.target.value }))
+                    }
+                    placeholder="Ex: Desculpe, não posso atender no momento. Envie uma mensagem!"
+                    className="h-11"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="autoReadMessage" className="text-sm font-medium text-foreground">
+                      Ler mensagens automaticamente
+                    </Label>
+                  </div>
+                  <Switch
+                    id="autoReadMessage"
+                    checked={settingsData.autoReadMessage}
+                    onCheckedChange={(checked) => 
+                      setSettingsData(prev => ({ ...prev, autoReadMessage: checked }))
+                    }
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="autoReadStatus" className="text-sm font-medium text-foreground">
+                      Ler status automaticamente
+                    </Label>
+                  </div>
+                  <Switch
+                    id="autoReadStatus"
+                    checked={settingsData.autoReadStatus}
+                    onCheckedChange={(checked) => 
+                      setSettingsData(prev => ({ ...prev, autoReadStatus: checked }))
+                    }
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -890,7 +809,6 @@ export function ZapiTab() {
               onClick={handleUpdateSettings}
               className="h-11 px-6"
             >
-              <Settings className="h-4 w-4 mr-2" />
               Salvar Configurações
             </Button>
           </DialogFooter>
