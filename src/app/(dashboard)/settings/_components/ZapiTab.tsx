@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,16 +12,19 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Plus, 
-  Settings, 
-  Smartphone, 
-  MessageSquare, 
+import {
+  Plus,
+  Settings,
+  Smartphone,
+  MessageSquare,
   Webhook,
   Trash2,
   RefreshCw,
   Power,
-  PowerOff
+  PowerOff,
+  QrCode,
+  Download,
+  Copy
 } from "lucide-react"
 import { ZApiInstance } from "@/lib/zapi/types"
 import { 
@@ -38,8 +42,10 @@ export function ZapiTab() {
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
+  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false)
   const [selectedInstance, setSelectedInstance] = useState<ZApiInstance | null>(null)
   const [instanceStatus, setInstanceStatus] = useState<Record<string, unknown>>({})
+  const [qrCodeData, setQrCodeData] = useState<{ bytes?: string; image?: string } | null>(null)
 
   // Form states
   const [formData, setFormData] = useState({
@@ -140,6 +146,34 @@ export function ZapiTab() {
       toast.success('Webhooks configurados para Vercel')
     } catch {
       toast.error('Erro ao configurar webhooks')
+    }
+  }
+
+  const handleShowQrCode = async (instance: ZApiInstance) => {
+    setSelectedInstance(instance)
+    setIsQrDialogOpen(true)
+    try {
+      const qrBytes = await zapiAction({ id: instance.id, action: 'qrBytes' })
+      const qrImage = await zapiAction({ id: instance.id, action: 'qrImage' })
+      setQrCodeData({ bytes: qrBytes as string, image: qrImage as string })
+    } catch {
+      toast.error('Erro ao gerar QR Code')
+    }
+  }
+
+  const handleCopyQrCode = () => {
+    if (qrCodeData?.bytes) {
+      navigator.clipboard.writeText(qrCodeData.bytes)
+      toast.success('QR Code copiado para a área de transferência')
+    }
+  }
+
+  const handleDownloadQrCode = () => {
+    if (qrCodeData?.image) {
+      const link = document.createElement('a')
+      link.href = qrCodeData.image
+      link.download = `qr-code-${selectedInstance?.alias || 'whatsapp'}.png`
+      link.click()
     }
   }
 
@@ -355,6 +389,14 @@ export function ZapiTab() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleShowQrCode(instance)}
+                        >
+                          <QrCode className="h-4 w-4 mr-2" />
+                          QR Code
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleConfigureWebhooks(instance.id)}
                         >
                           <Webhook className="h-4 w-4 mr-2" />
@@ -519,6 +561,48 @@ export function ZapiTab() {
               Salvar Configurações
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para QR Code */}
+      <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>QR Code - {selectedInstance?.alias}</DialogTitle>
+            <DialogDescription>
+              Escaneie este QR Code com seu WhatsApp para conectar a instância
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {qrCodeData?.image ? (
+              <div className="flex flex-col items-center space-y-4">
+                <Image 
+                  src={qrCodeData.image} 
+                  alt="QR Code WhatsApp" 
+                  width={300}
+                  height={300}
+                  className="max-w-[300px] max-h-[300px] border rounded"
+                />
+                <div className="flex space-x-2">
+                  <Button onClick={handleCopyQrCode} variant="outline" size="sm">
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar Código
+                  </Button>
+                  <Button onClick={handleDownloadQrCode} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar QR
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-center">
+                  <QrCode className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">Gerando QR Code...</p>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
