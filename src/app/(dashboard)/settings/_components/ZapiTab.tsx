@@ -614,7 +614,7 @@ export function ZapiTab() {
 
       {/* Settings Dialog */}
       <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold">Webhooks e configurações gerais</DialogTitle>
             <DialogDescription className="text-base text-muted-foreground">
