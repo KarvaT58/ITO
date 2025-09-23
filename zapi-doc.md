@@ -2328,6 +2328,7 @@ caso "REVOKE" :
 campo_html = "<div align='center'><div class='alert alert-primary' role='alert'><span>Apagou uma mensagem.<br><br></span>" + campohora + "</div></div>"
 quebrar;
 
+Ao desconectar
 
 Conceituação#
 Esse é o webhook de resposta de desconexão
@@ -2378,6 +2379,7 @@ Neste caso certifique que esteja enviando o corretamente a especificação do m�
 415 #
 Caso você receba um erro 415, certifique de adicionar na headers da requisição o "Content-Type" do objeto que você está enviando, em sua grande maioria "application/json"
 
+Status da mensagem
 
 Conceituação#
 Esse é o webhook de retorno do status da mensagem
@@ -2474,6 +2476,7 @@ Neste caso certifique que esteja enviando o corretamente a especificação do m�
 415 #
 Caso você receba um erro 415, certifique de adicionar na headers da requisição o "Content-Type" do objeto que você está enviando, em sua grande maioria "application/json"
 
+Status do chat
 
 Conceituação#
 Esse é o webhook de retorno status do chat

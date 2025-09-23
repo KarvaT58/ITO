@@ -93,7 +93,7 @@ const data = {
   navFooter: [
     {
       title: "Configurações",
-      url: "#",
+      url: "/settings",
       icon: Settings,
     },
     {
