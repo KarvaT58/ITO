@@ -31,14 +31,15 @@ export const getSupabaseClient = () => {
     return mockSupabase
   }
   
-  // Lazy import do Supabase apenas no cliente
-  try {
-    const { createClient } = require('@supabase/supabase-js')
-    return createClient(supabaseUrl, supabaseAnonKey)
-  } catch (error) {
-    console.warn('Erro ao carregar Supabase:', error)
-    return mockSupabase
-  }
+        // Lazy import do Supabase apenas no cliente
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { createClient } = require('@supabase/supabase-js')
+          return createClient(supabaseUrl, supabaseAnonKey)
+        } catch (error) {
+          console.warn('Erro ao carregar Supabase:', error)
+          return mockSupabase
+        }
 }
 
 // Exporta uma instância que só funciona no cliente

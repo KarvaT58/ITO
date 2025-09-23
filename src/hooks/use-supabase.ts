@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 
 // Singleton para evitar múltiplas instâncias
-let supabaseInstance: any = null
+let supabaseInstance: unknown = null
 
 export const useSupabase = () => {
-  const [supabase, setSupabase] = useState<any>(null)
+  const [supabase, setSupabase] = useState<unknown>(null)
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
