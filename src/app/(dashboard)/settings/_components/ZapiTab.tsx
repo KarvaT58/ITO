@@ -114,7 +114,7 @@ export function ZapiTab() {
         }
       }
     } catch {
-      toast.error('Erro ao carregar instâncias')
+      toast.error('Erro ao carregar instâncias', { position: 'bottom-right' })
     } finally {
       setLoading(false)
     }
@@ -125,12 +125,12 @@ export function ZapiTab() {
   const handleAddInstance = async () => {
     try {
       await createZapiInstance(formData)
-      toast.success('Instância criada com sucesso')
+      toast.success('Instância criada com sucesso', { position: 'bottom-right' })
       setIsAddDialogOpen(false)
       setFormData({ alias: '', instance_id: '', instance_token: '', client_security_token: '' })
       loadInstances()
     } catch {
-      toast.error('Erro ao criar instância')
+      toast.error('Erro ao criar instância', { position: 'bottom-right' })
     }
   }
 
@@ -146,7 +146,7 @@ export function ZapiTab() {
       // Primeiro, tentar desconectar da Z-API
       try {
         await zapiAction({ id: instanceToDelete.id, action: 'disconnect' })
-        toast.success('Instância desconectada da Z-API')
+        toast.success('Instância desconectada da Z-API', { position: 'bottom-right' })
       } catch (disconnectError) {
         console.warn('Erro ao desconectar da Z-API (continuando com exclusão):', disconnectError)
         // Continuar com a exclusão mesmo se a desconexão falhar
@@ -154,13 +154,13 @@ export function ZapiTab() {
       
       // Depois, deletar do banco de dados
       await deleteZapiInstance(instanceToDelete.id)
-      toast.success('Instância deletada com sucesso')
+      toast.success('Instância deletada com sucesso', { position: 'bottom-right' })
       loadInstances()
       setIsDeleteDialogOpen(false)
       setInstanceToDelete(null)
     } catch (error) {
       console.error('Erro ao deletar instância:', error)
-      toast.error('Erro ao deletar instância')
+      toast.error('Erro ao deletar instância', { position: 'bottom-right' })
     }
   }
 
@@ -174,13 +174,13 @@ export function ZapiTab() {
     
     try {
       await zapiAction({ id: instanceToDisconnect.id, action: 'disconnect' })
-      toast.success('Instância desconectada com sucesso')
+      toast.success('Instância desconectada com sucesso', { position: 'bottom-right' })
       loadInstances()
       setIsDisconnectDialogOpen(false)
       setInstanceToDisconnect(null)
     } catch (error) {
       console.error('Erro ao desconectar instância:', error)
-      toast.error('Erro ao desconectar instância')
+      toast.error('Erro ao desconectar instância', { position: 'bottom-right' })
     }
   }
 
@@ -192,28 +192,28 @@ export function ZapiTab() {
       // Feedback específico para cada ação
       switch (action) {
         case 'status':
-          toast.success('Status verificado com sucesso')
+          toast.success('Status verificado com sucesso', { position: 'bottom-right' })
           setInstanceStatus(prev => ({ ...prev, [instanceId]: result }))
           break
         case 'restart':
-          toast.success('Instância reiniciada com sucesso')
+          toast.success('Instância reiniciada com sucesso', { position: 'bottom-right' })
           // Recarregar status após reiniciar
           setTimeout(() => {
             handleZapiAction(instanceId, 'status')
           }, 2000)
           break
         case 'disconnect':
-          toast.success('Instância desconectada com sucesso')
+          toast.success('Instância desconectada com sucesso', { position: 'bottom-right' })
           setInstanceStatus(prev => ({ ...prev, [instanceId]: { connected: false } }))
           break
         default:
-          toast.success('Ação executada com sucesso')
+          toast.success('Ação executada com sucesso', { position: 'bottom-right' })
       }
       
       return result
     } catch (error) {
       console.error(`Erro ao executar ${action}:`, error)
-      toast.error(`Erro ao executar ${action}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+      toast.error(`Erro ao executar ${action}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, { position: 'bottom-right' })
     }
   }
 
@@ -246,7 +246,7 @@ export function ZapiTab() {
       // Validate the extracted data
       if (qrBytes && qrImage && qrBytes.trim() !== '' && qrImage.trim() !== '') {
         setQrCodeData({ bytes: qrBytes, image: qrImage })
-        toast.success('QR Code gerado com sucesso')
+        toast.success('QR Code gerado com sucesso', { position: 'bottom-right' })
         
         // Iniciar polling para verificar conexão
         startQrPolling(instance.id)
@@ -256,7 +256,7 @@ export function ZapiTab() {
       }
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error)
-      toast.error(`Erro ao gerar QR Code: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+      toast.error(`Erro ao gerar QR Code: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, { position: 'bottom-right' })
       setQrCodeData({ bytes: '', image: '' }) // Set empty to show error state
     }
   }
@@ -302,7 +302,7 @@ export function ZapiTab() {
         // Recarregar lista de instâncias para atualizar UI
         loadInstances()
         
-        toast.success('WhatsApp conectado com sucesso!')
+        toast.success('WhatsApp conectado com sucesso!', { position: 'bottom-right' })
       }
     } catch (error) {
       console.error('Erro ao verificar status da conexão:', error)
