@@ -375,11 +375,11 @@ export function ZapiTab() {
       
       // Configurações gerais do WhatsApp - executar sequencialmente para evitar conflitos
       const generalSettings = [
-        { action: 'autoReadMessage', payload: { enable: settingsData.autoReadMessage } },
-        { action: 'autoReadStatus', payload: { enable: settingsData.autoReadStatus } },
-        { action: 'callRejectAuto', payload: { enable: settingsData.callRejectAuto } },
-        { action: 'callRejectMessage', payload: { message: settingsData.callRejectMessage } },
-        { action: 'notifySentByMe', payload: { enable: settingsData.notifySentByMe } }
+        { action: 'autoReadMessage', payload: { valor: settingsData.autoReadMessage } },
+        { action: 'autoReadStatus', payload: { valor: settingsData.autoReadStatus } },
+        { action: 'callRejectAuto', payload: { valor: settingsData.callRejectAuto } },
+        { action: 'callRejectMessage', payload: { value: settingsData.callRejectMessage } },
+        { action: 'notifySentByMe', payload: { notifySentByMe: settingsData.notifySentByMe } }
       ]
 
       for (const setting of generalSettings) {
