@@ -25,6 +25,12 @@ export const getSupabaseClient = () => {
     return mockSupabase
   }
   
+  // Verificar se as variáveis são válidas
+  if (!supabaseUrl.startsWith('http')) {
+    console.warn('Invalid Supabase URL, using mock client')
+    return mockSupabase
+  }
+  
   // Lazy import do Supabase apenas no cliente
   try {
     const { createClient } = require('@supabase/supabase-js')
