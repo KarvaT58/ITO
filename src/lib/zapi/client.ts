@@ -59,28 +59,27 @@ export async function zapiFetch<T>(args: {
 function mapAppBodyToZapi(body: Record<string, unknown>) {
   const out: Record<string, unknown> = { ...body };
   
-  // Mapear 'value' para 'valor' se necessário
-  if ('value' in out && !('valor' in out)) {
-    out['valor'] = out['value'];
-    delete out['value'];
+  // Para webhooks: mapear 'url' para 'valor' (conforme documentação)
+  if ('url' in out && !('valor' in out)) {
+    out['valor'] = out['url'];
+    delete out['url'];
   }
   
-  // Mapear 'enable' para 'valor' se necessário
+  // Para configurações booleanas: mapear 'enable' para 'valor'
   if ('enable' in out && !('valor' in out)) {
     out['valor'] = !!out['enable'];
     delete out['enable'];
   }
   
-  // Mapear 'message' para 'value' se necessário (para callRejectMessage)
-  if ('message' in out && !('value' in out) && !('valor' in out)) {
+  // Para mensagens: mapear 'message' para 'value'
+  if ('message' in out && !('value' in out)) {
     out['value'] = out['message'];
     delete out['message'];
   }
   
-  // Mapear 'url' para 'value' se necessário (para webhooks)
-  if ('url' in out && !('value' in out) && !('valor' in out)) {
-    out['value'] = out['url'];
-    delete out['url'];
+  // Para campos que já têm 'value': manter como está
+  if ('value' in out && !('valor' in out)) {
+    // Não fazer nada, manter 'value'
   }
   
   console.log('Mapped payload:', out);
