@@ -9,10 +9,14 @@ import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
+interface SignupFormProps {
+  className?: string;
+}
+
 export function SignupForm({
   className,
   ...props
-}: React.ComponentProps<"form">) {
+}: SignupFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -59,7 +63,7 @@ export function SignupForm({
       if (data.user) {
         setSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setError('Erro ao criar conta. Tente novamente.')
     } finally {
       setIsLoading(false)

@@ -9,10 +9,14 @@ import { useState, useEffect } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
+interface ResetPasswordFormProps {
+  className?: string;
+}
+
 export function ResetPasswordForm({
   className,
   ...props
-}: React.ComponentProps<"form">) {
+}: ResetPasswordFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -69,7 +73,7 @@ export function ResetPasswordForm({
       }
 
       setSuccess(true)
-    } catch (err) {
+    } catch {
       setError('Erro ao redefinir senha. Tente novamente.')
     } finally {
       setIsLoading(false)

@@ -9,10 +9,14 @@ import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
+interface LoginFormProps {
+  className?: string;
+}
+
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<"form">) {
+}: LoginFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -44,7 +48,7 @@ export function LoginForm({
         // Redirecionar para o dashboard
         router.push("/dashboard")
       }
-    } catch (err) {
+    } catch {
       setError('Erro ao fazer login. Tente novamente.')
     } finally {
       setIsLoading(false)

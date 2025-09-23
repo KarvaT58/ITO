@@ -8,10 +8,14 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 
+interface ForgotPasswordFormProps {
+  className?: string;
+}
+
 export function ForgotPasswordForm({
   className,
   ...props
-}: React.ComponentProps<"form">) {
+}: ForgotPasswordFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
@@ -38,7 +42,7 @@ export function ForgotPasswordForm({
       }
 
       setEmailSent(true)
-    } catch (err) {
+    } catch {
       setError('Erro ao enviar email de recuperação. Tente novamente.')
     } finally {
       setIsLoading(false)
