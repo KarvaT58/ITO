@@ -415,9 +415,9 @@ export function ZapiTab() {
           call_reject_message: settingsData.callRejectMessage,
           auto_read_message: settingsData.autoReadMessage,
           auto_read_status: settingsData.autoReadStatus,
-          profile_name: settingsData.profileName,
-          profile_description: settingsData.profileDescription,
-          profile_picture: settingsData.profilePicture,
+          // profile_name: settingsData.profileName,
+          // profile_description: settingsData.profileDescription,
+          // profile_picture: settingsData.profilePicture,
         })
         console.log('✅ Configurações salvas no banco de dados')
       } catch (error) {
