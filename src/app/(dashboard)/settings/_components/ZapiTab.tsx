@@ -140,12 +140,23 @@ export function ZapiTab() {
     if (!instanceToDelete) return
     
     try {
+      // Primeiro, tentar desconectar da Z-API
+      try {
+        await zapiAction({ id: instanceToDelete.id, action: 'disconnect' })
+        toast.success('Instância desconectada da Z-API')
+      } catch (disconnectError) {
+        console.warn('Erro ao desconectar da Z-API (continuando com exclusão):', disconnectError)
+        // Continuar com a exclusão mesmo se a desconexão falhar
+      }
+      
+      // Depois, deletar do banco de dados
       await deleteZapiInstance(instanceToDelete.id)
       toast.success('Instância deletada com sucesso')
       loadInstances()
       setIsDeleteDialogOpen(false)
       setInstanceToDelete(null)
-    } catch {
+    } catch (error) {
+      console.error('Erro ao deletar instância:', error)
       toast.error('Erro ao deletar instância')
     }
   }
