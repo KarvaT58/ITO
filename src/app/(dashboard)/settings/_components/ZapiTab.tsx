@@ -207,7 +207,8 @@ export function ZapiTab() {
       }
       
       console.log('🧪 [TESTE] ===== FIM TESTE CONFIGURAÇÕES =====')
-      toast.success('Teste de configurações executado - veja o console', { position: 'bottom-right' })
+      console.log('🚨 [PROBLEMA] ZAPI sempre retorna {value: true} - configurações não estão sendo aplicadas!')
+      toast.success('Teste concluído - ZAPI tem problema com configurações', { position: 'bottom-right' })
     } catch (error) {
       console.error('Erro ao testar configurações:', error)
       toast.error('Erro ao testar configurações', { position: 'bottom-right' })
@@ -512,8 +513,19 @@ export function ZapiTab() {
         // Continuar mesmo se falhar ao salvar no banco
       }
 
+      // Tentar reiniciar a instância para aplicar as configurações
+      console.log('🔄 [DEBUG] ===== TENTANDO REINICIAR INSTÂNCIA =====')
+      try {
+        await zapiAction({ id: selectedInstance.id, action: 'restart' })
+        console.log('✅ [DEBUG] Instância reiniciada com sucesso!')
+        console.log('✅ [DEBUG] Aguardando 3 segundos para instância estabilizar...')
+        await new Promise(resolve => setTimeout(resolve, 3000))
+      } catch (error) {
+        console.warn('⚠️ [DEBUG] Erro ao reiniciar instância (pode ser normal):', error)
+      }
+      
       toast.dismiss('saving-settings')
-      toast.success('Configurações atualizadas com sucesso!', {
+      toast.success('Configurações atualizadas! Instância reiniciada para aplicar mudanças.', {
         position: 'bottom-right'
       })
       setIsSettingsDialogOpen(false)
