@@ -564,10 +564,16 @@ export function ZapiTab() {
                                 <PowerOff className="h-4 w-4 mr-2" />
                                 Desconectar
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openSettingsDialog(instance)}>
-                                <Settings className="h-4 w-4 mr-2" />
-                                Configurações
+                            <DropdownMenuItem onClick={() => openSettingsDialog(instance)}>
+                              <Settings className="h-4 w-4 mr-2" />
+                              Configurações
+                            </DropdownMenuItem>
+                            {!isConnected && (
+                              <DropdownMenuItem onClick={() => handleShowQrCode(instance)}>
+                                <QrCode className="h-4 w-4 mr-2" />
+                                QR Code
                               </DropdownMenuItem>
+                            )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <Button
@@ -584,28 +590,9 @@ export function ZapiTab() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          {/* QR Code - só aparece quando desconectado */}
-                          {!isConnected && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleShowQrCode(instance)}
-                            >
-                              <QrCode className="h-4 w-4 mr-2" />
-                              QR Code
-                            </Button>
-                          )}
-                        </div>
-                        
-                        {/* Sistema de horário - centralizado acima do QR Code */}
-                        <div className="mt-4 mb-4">
-                          <div className="text-center text-sm text-muted-foreground">
-                            <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
-                          </div>
-                        </div>
-                        
+                      {/* Sistema de horário - centralizado */}
+                      <div className="text-center text-sm text-muted-foreground">
+                        <strong>Criada:</strong> {new Date(instance.created_at).toLocaleString('pt-BR')}
                       </div>
                     </CardContent>
                   </Card>
