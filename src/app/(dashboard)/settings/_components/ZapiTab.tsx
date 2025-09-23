@@ -378,7 +378,7 @@ export function ZapiTab() {
             </DialogHeader>
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="alias" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="alias" className="text-sm font-medium text-foreground">
                   Nome da Instância
                 </Label>
                 <Input
@@ -388,11 +388,10 @@ export function ZapiTab() {
                   placeholder="Ex: WhatsApp Principal, Loja Online, Suporte..."
                   className="h-11"
                 />
-                <p className="text-xs text-gray-500">Um nome amigável para identificar esta instância</p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="instance_id" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="instance_id" className="text-sm font-medium text-foreground">
                   ID da Instância
                 </Label>
                 <Input
@@ -402,11 +401,10 @@ export function ZapiTab() {
                   placeholder="Ex: 3C7F4A2B1D8E9F0A"
                   className="h-11"
                 />
-                <p className="text-xs text-gray-500">ID único da sua instância no Z-API</p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="instance_token" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="instance_token" className="text-sm font-medium text-foreground">
                   Token da Instância
                 </Label>
                 <Input
@@ -416,11 +414,10 @@ export function ZapiTab() {
                   placeholder="Ex: 1A2B3C4D5E6F7G8H9I0J"
                   className="h-11"
                 />
-                <p className="text-xs text-gray-500">Token de autenticação da instância</p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="client_security_token" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="client_security_token" className="text-sm font-medium text-foreground">
                   Token de Segurança
                 </Label>
                 <Input
@@ -430,7 +427,6 @@ export function ZapiTab() {
                   placeholder="Ex: 9Z8Y7X6W5V4U3T2S1R0Q"
                   className="h-11"
                 />
-                <p className="text-xs text-gray-500">Token de segurança da sua conta Z-API</p>
               </div>
             </div>
             <DialogFooter className="gap-3 pt-6">
@@ -443,7 +439,7 @@ export function ZapiTab() {
               </Button>
               <Button 
                 onClick={handleAddInstance}
-                className="h-11 px-6 bg-blue-600 hover:bg-blue-700"
+                className="h-11 px-6"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Instância
@@ -610,7 +606,7 @@ export function ZapiTab() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold">Configurações da Instância</DialogTitle>
-            <DialogDescription className="text-base text-gray-600">
+            <DialogDescription className="text-base text-muted-foreground">
               Configure as opções da instância <strong>&ldquo;{selectedInstance?.alias}&rdquo;</strong>
             </DialogDescription>
           </DialogHeader>
@@ -618,15 +614,14 @@ export function ZapiTab() {
           <div className="space-y-8">
             {/* Leitura Automática */}
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900 border-b pb-2">Leitura Automática</h4>
+              <h4 className="text-lg font-medium text-foreground border-b pb-2">Leitura Automática</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="autoReadMessage" className="text-sm font-medium text-gray-700">
+                      <Label htmlFor="autoReadMessage" className="text-sm font-medium text-foreground">
                         Leitura Automática de Mensagens
                       </Label>
-                      <p className="text-xs text-gray-500">Marca mensagens como lidas automaticamente</p>
                     </div>
                     <Switch
                       id="autoReadMessage"
@@ -640,10 +635,9 @@ export function ZapiTab() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="autoReadStatus" className="text-sm font-medium text-gray-700">
+                      <Label htmlFor="autoReadStatus" className="text-sm font-medium text-foreground">
                         Leitura Automática de Status
                       </Label>
-                      <p className="text-xs text-gray-500">Marca status como visualizados automaticamente</p>
                     </div>
                     <Switch
                       id="autoReadStatus"
@@ -659,14 +653,13 @@ export function ZapiTab() {
 
             {/* Rejeição de Chamadas */}
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900 border-b pb-2">Rejeição de Chamadas</h4>
+              <h4 className="text-lg font-medium text-foreground border-b pb-2">Rejeição de Chamadas</h4>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="callRejectAuto" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="callRejectAuto" className="text-sm font-medium text-foreground">
                       Rejeitar Chamadas Automaticamente
                     </Label>
-                    <p className="text-xs text-gray-500">Rejeita chamadas de voz automaticamente</p>
                   </div>
                   <Switch
                     id="callRejectAuto"
@@ -677,7 +670,7 @@ export function ZapiTab() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="callRejectMessage" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="callRejectMessage" className="text-sm font-medium text-foreground">
                     Mensagem de Rejeição
                   </Label>
                   <Input
@@ -689,17 +682,16 @@ export function ZapiTab() {
                     placeholder="Ex: Desculpe, não posso atender no momento. Envie uma mensagem!"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Mensagem enviada quando chamada for rejeitada</p>
                 </div>
               </div>
             </div>
 
             {/* Perfil */}
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900 border-b pb-2">Perfil do WhatsApp</h4>
+              <h4 className="text-lg font-medium text-foreground border-b pb-2">Perfil do WhatsApp</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="profileName" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="profileName" className="text-sm font-medium text-foreground">
                     Nome do Perfil
                   </Label>
                   <Input
@@ -711,10 +703,9 @@ export function ZapiTab() {
                     placeholder="Ex: Suporte Técnico, Loja Online..."
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Nome que aparecerá no WhatsApp</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="profileDescription" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="profileDescription" className="text-sm font-medium text-foreground">
                     Descrição do Perfil
                   </Label>
                   <Input
@@ -726,11 +717,10 @@ export function ZapiTab() {
                     placeholder="Ex: Atendimento 24h, Suporte técnico..."
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Status que aparecerá no WhatsApp</p>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="profilePicture" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="profilePicture" className="text-sm font-medium text-foreground">
                   URL da Foto do Perfil
                 </Label>
                 <Input
@@ -742,18 +732,17 @@ export function ZapiTab() {
                   placeholder="https://exemplo.com/foto-perfil.jpg"
                   className="h-11"
                 />
-                <p className="text-xs text-gray-500">URL da imagem que será usada como foto do perfil</p>
               </div>
             </div>
 
             {/* Webhooks */}
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900 border-b pb-2">Configuração de Webhooks</h4>
-              <p className="text-sm text-gray-600">Configure os webhooks para receber eventos em tempo real</p>
+              <h4 className="text-lg font-medium text-foreground border-b pb-2">Configuração de Webhooks</h4>
+              <p className="text-sm text-muted-foreground">Configure os webhooks para receber eventos em tempo real</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="webhookDelivery" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="webhookDelivery" className="text-sm font-medium text-foreground">
                     📤 Entrega de Mensagens
                   </Label>
                   <Input
@@ -765,11 +754,10 @@ export function ZapiTab() {
                     placeholder="https://ito-two.vercel.app/api/zapi/webhooks/delivery"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Webhook para mensagens enviadas</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookReceived" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="webhookReceived" className="text-sm font-medium text-foreground">
                     📥 Mensagens Recebidas
                   </Label>
                   <Input
@@ -781,11 +769,10 @@ export function ZapiTab() {
                     placeholder="https://ito-two.vercel.app/api/zapi/webhooks/received"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Webhook para mensagens recebidas</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookReceivedDelivery" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="webhookReceivedDelivery" className="text-sm font-medium text-foreground">
                     📨 Entrega de Mensagens Recebidas
                   </Label>
                   <Input
@@ -797,11 +784,10 @@ export function ZapiTab() {
                     placeholder="https://ito-two.vercel.app/api/zapi/webhooks/received"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Webhook para confirmação de entrega</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookDisconnected" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="webhookDisconnected" className="text-sm font-medium text-foreground">
                     🔌 Desconexão
                   </Label>
                   <Input
@@ -813,11 +799,10 @@ export function ZapiTab() {
                     placeholder="https://ito-two.vercel.app/api/zapi/webhooks/disconnected"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Webhook quando WhatsApp desconectar</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookMessageStatus" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="webhookMessageStatus" className="text-sm font-medium text-foreground">
                     ⚡ Status das Mensagens
                   </Label>
                   <Input
@@ -829,11 +814,10 @@ export function ZapiTab() {
                     placeholder="https://ito-two.vercel.app/api/zapi/webhooks/status"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Webhook para status de mensagens</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookChatPresence" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="webhookChatPresence" className="text-sm font-medium text-foreground">
                     📍 Presença no Chat
                   </Label>
                   <Input
@@ -845,11 +829,10 @@ export function ZapiTab() {
                     placeholder="https://ito-two.vercel.app/api/zapi/webhooks/chat-presence"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Webhook para presença no chat</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="webhookConnected" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="webhookConnected" className="text-sm font-medium text-foreground">
                     ✅ Conexão
                   </Label>
                   <Input
@@ -861,12 +844,11 @@ export function ZapiTab() {
                     placeholder="https://ito-two.vercel.app/api/zapi/webhooks/connected"
                     className="h-11"
                   />
-                  <p className="text-xs text-gray-500">Webhook quando WhatsApp conectar</p>
                 </div>
               </div>
               
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="mt-4 p-4 bg-muted border rounded-lg">
+                <p className="text-sm text-muted-foreground">
                   <strong>💡 Dica:</strong> Use o botão &ldquo;Webhooks Vercel&rdquo; para configurar todos os webhooks automaticamente com as URLs corretas.
                 </p>
               </div>
@@ -883,7 +865,7 @@ export function ZapiTab() {
             </Button>
             <Button 
               onClick={handleUpdateSettings}
-              className="h-11 px-6 bg-blue-600 hover:bg-blue-700"
+              className="h-11 px-6"
             >
               <Settings className="h-4 w-4 mr-2" />
               Salvar Configurações
