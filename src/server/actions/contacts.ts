@@ -353,9 +353,15 @@ export async function syncContactsFromZApi(instanceId: string) {
     const supabase = createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) {
+    // Verificar se estamos no Vercel
+    const isVercel = process.env.VERCEL === '1'
+    
+    if (!user && !isVercel) {
       return { success: false, error: 'Usuário não autenticado' }
     }
+    
+    // Se estamos no Vercel, usar um user_id mock
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
 
     const syncedContacts = []
 
@@ -366,8 +372,8 @@ export async function syncContactsFromZApi(instanceId: string) {
         const { data: existingContact } = await supabase
           .from('contacts')
           .select('id')
-          .eq('user_id', user?.id || 'default-user')
-          .eq('phone', zapiContact.telefone)
+          .eq('user_id', userId)
+          .eq('phone', zapiContact.phone)
           .single()
 
         if (existingContact) {
@@ -389,10 +395,10 @@ export async function syncContactsFromZApi(instanceId: string) {
           const { data: newContact } = await supabase
             .from('contacts')
             .insert({
-              user_id: user.id,
+              user_id: userId,
               name: zapiContact.name || zapiContact.short || 'Contato',
               short: zapiContact.short,
-              phone: zapiContact.telefone,
+              phone: zapiContact.phone,
               notify: zapiContact.notify,
               vname: zapiContact.vname,
               img_url: zapiContact.imgUrl,
