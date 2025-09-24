@@ -417,15 +417,20 @@ export function ContactsTab() {
       return
     }
 
+    console.log('Salvando etiquetas para contato:', selectedContact.id, 'Etiquetas:', selectedContact.tags)
+
     try {
       const result = await updateContact(selectedContact.id, {
         tags: selectedContact.tags
       })
 
+      console.log('Resultado da atualização:', result)
+
       if (result.success) {
         toast.success('Etiquetas atualizadas com sucesso!')
         setIsAddTagToContactOpen(false)
         loadContacts() // Recarregar a lista para mostrar as mudanças
+        loadTotalStats() // Atualizar estatísticas
       } else {
         toast.error(result.error || 'Erro ao atualizar etiquetas')
       }
@@ -899,6 +904,37 @@ export function ContactsTab() {
                 onChange={(e) => setNewContact(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="joao@exemplo.com"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tags">Etiquetas</Label>
+              <div className="max-h-32 overflow-y-auto space-y-2 border rounded-md p-2">
+                {tags.map(tag => (
+                  <div key={tag.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`new-contact-tag-${tag.id}`}
+                      checked={newContact.tags.includes(tag.name)}
+                      onChange={(e) => {
+                        const updatedTags = e.target.checked
+                          ? [...newContact.tags, tag.name]
+                          : newContact.tags.filter(t => t !== tag.name)
+                        setNewContact(prev => ({ ...prev, tags: updatedTags }))
+                      }}
+                      className="rounded"
+                    />
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <Label htmlFor={`new-contact-tag-${tag.id}`} className="text-sm">
+                      {tag.name}
+                    </Label>
+                  </div>
+                ))}
+                {tags.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Nenhuma etiqueta disponível. Crie uma etiqueta primeiro.</p>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>
