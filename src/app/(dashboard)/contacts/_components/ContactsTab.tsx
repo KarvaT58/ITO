@@ -98,7 +98,15 @@ export function ContactsTab() {
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false)
   const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false)
   const [isAddTagToContactOpen, setIsAddTagToContactOpen] = useState(false)
+  const [isEditContactOpen, setIsEditContactOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
+  const [editingContact, setEditingContact] = useState({
+    id: '',
+    name: '',
+    phone: '',
+    email: '',
+    tags: [] as string[]
+  })
 
   // Estados para importação CSV
   const [csvContacts, setCsvContacts] = useState<Array<{name: string, phone: string, email?: string, tag?: string}>>([])
@@ -444,6 +452,45 @@ export function ContactsTab() {
     }
   }
 
+  const handleEditContact = (contact: Contact) => {
+    setEditingContact({
+      id: contact.id,
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email || '',
+      tags: contact.tags || []
+    })
+    setIsEditContactOpen(true)
+  }
+
+  const handleSaveContactEdit = async () => {
+    if (!editingContact.name || !editingContact.phone) {
+      toast.error('Nome e telefone são obrigatórios')
+      return
+    }
+
+    try {
+      const result = await updateContact(editingContact.id, {
+        name: editingContact.name,
+        phone: editingContact.phone,
+        email: editingContact.email || undefined,
+        tags: editingContact.tags
+      })
+
+      if (result.success) {
+        toast.success('Contato atualizado com sucesso!')
+        setIsEditContactOpen(false)
+        loadContacts()
+        loadTotalStats()
+      } else {
+        toast.error(result.error || 'Erro ao atualizar contato')
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar contato:', error)
+      toast.error('Erro ao atualizar contato')
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -771,6 +818,10 @@ export function ContactsTab() {
                         }}>
                           <Eye className="h-4 w-4 mr-2" />
                           Ver Detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditContact(contact)}>
+                          <User className="h-4 w-4 mr-2" />
+                          Editar Contato
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => {
                           setSelectedContact(contact)
@@ -1222,6 +1273,87 @@ export function ContactsTab() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsContactDetailsOpen(false)}>
               Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Editar Contato */}
+      <Dialog open={isEditContactOpen} onOpenChange={setIsEditContactOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Contato</DialogTitle>
+            <DialogDescription>
+              Edite as informações do contato.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Nome *</Label>
+              <Input
+                id="edit-name"
+                value={editingContact.name}
+                onChange={(e) => setEditingContact(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Nome completo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Telefone *</Label>
+              <Input
+                id="edit-phone"
+                value={editingContact.phone}
+                onChange={(e) => setEditingContact(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="5511999999999"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editingContact.email}
+                onChange={(e) => setEditingContact(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-tags">Etiquetas</Label>
+              <div className="max-h-32 overflow-y-auto space-y-2 border rounded-md p-2">
+                {tags.map(tag => (
+                  <div key={tag.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`edit-contact-tag-${tag.id}`}
+                      checked={editingContact.tags.includes(tag.name)}
+                      onChange={(e) => {
+                        const updatedTags = e.target.checked
+                          ? [...editingContact.tags, tag.name]
+                          : editingContact.tags.filter(t => t !== tag.name)
+                        setEditingContact(prev => ({ ...prev, tags: updatedTags }))
+                      }}
+                      className="rounded"
+                    />
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <Label htmlFor={`edit-contact-tag-${tag.id}`} className="text-sm">
+                      {tag.name}
+                    </Label>
+                  </div>
+                ))}
+                {tags.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Nenhuma etiqueta disponível.</p>
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditContactOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveContactEdit}>
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>
