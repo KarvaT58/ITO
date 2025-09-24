@@ -409,8 +409,8 @@ export async function createTag(tag: Omit<Tag, 'id' | 'created_at'>) {
     // Verificar autenticação
     const { user, isVercel } = await checkAuth(supabase)
     
-    // Se estamos no Vercel, usar um user_id mock
-    const userId = isVercel ? 'default-user' : user?.id
+    // Se estamos no Vercel, usar um user_id mock (UUID válido)
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id
     
     if (!userId) {
       throw new Error('Usuário não identificado')
@@ -780,7 +780,7 @@ async function getInstanceTokens(instanceId: string) {
     .from('zapi_instances')
     .select('instance_id, instance_token, client_security_token')
     .eq('id', instanceId)
-    .eq('user_id', user?.id || 'default-user')
+    .eq('user_id', user?.id || '00000000-0000-0000-0000-000000000000')
     .single()
 
   if (instanceError || !instance) {
