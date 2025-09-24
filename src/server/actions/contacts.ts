@@ -1001,7 +1001,7 @@ async function getInstanceTokens(instanceId: string) {
     const instance = instances[0]
     console.log('Vercel: Usando primeira instância ativa:', instance)
     return {
-      instanceId: instance.instance_id,
+      instanceId: instance.instance_id, // Sempre usar o instance_id real da Z-API
       instanceToken: instance.instance_token,
       clientSecurityToken: instance.client_security_token
     }
