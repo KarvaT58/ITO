@@ -528,7 +528,13 @@ export function ContactsTab() {
   }
 
   const selectAllContacts = () => {
-    setSelectedContacts(contacts.map(contact => contact.id))
+    if (selectedContacts.length === contacts.length && contacts.length > 0) {
+      // Se todos estão selecionados, desmarcar todos
+      setSelectedContacts([])
+    } else {
+      // Se não estão todos selecionados, selecionar todos
+      setSelectedContacts(contacts.map(contact => contact.id))
+    }
   }
 
   const clearSelection = () => {
@@ -1245,6 +1251,7 @@ export function ContactsTab() {
                           const updatedTags = e.target.checked
                             ? [...selectedContact.tags, tag.name]
                             : selectedContact.tags.filter(t => t !== tag.name)
+                          console.log('Atualizando etiquetas:', updatedTags)
                           setSelectedContact({ ...selectedContact, tags: updatedTags })
                         }}
                         className="rounded"
