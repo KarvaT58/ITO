@@ -462,6 +462,7 @@ export async function importContactsFromCSV(contacts: Array<{
   phone: string
   email?: string
   tag?: string
+  has_whatsapp?: boolean
 }>) {
   try {
     const supabase = createServerClient()
@@ -539,7 +540,7 @@ export async function importContactsFromCSV(contacts: Array<{
           phone: normalizedPhone,
           email: contact.email || null,
           tags: contact.tag ? [contact.tag] : [],
-          has_whatsapp: true,
+          has_whatsapp: contact.has_whatsapp || false,
           user_id: userId
         }
         

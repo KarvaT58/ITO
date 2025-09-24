@@ -383,6 +383,69 @@ export function ContactsTab() {
     setImportProgress(0)
 
     try {
+      // Buscar instâncias Z-API disponíveis
+      const instances = await listZapiInstances()
+      
+      if (!instances || instances.length === 0) {
+        toast.error('Nenhuma instância Z-API configurada para verificação de WhatsApp')
+        setIsImporting(false)
+        return
+      }
+
+      const instance = instances[0]
+      const verifiedContacts = []
+      let verifiedCount = 0
+
+      // Verificar WhatsApp para cada contato
+      toast.loading('Verificando números de WhatsApp...', { id: 'verify-whatsapp' })
+      
+      for (let i = 0; i < csvContacts.length; i++) {
+        const contact = csvContacts[i]
+        
+        try {
+          // Atualizar progresso
+          const progress = Math.round(((i + 1) / csvContacts.length) * 50) // 50% para verificação
+          setImportProgress(progress)
+          
+          // Verificar se o número tem WhatsApp
+          const whatsappResult = await checkPhoneExists(instance.id, contact.phone)
+          
+          if (whatsappResult.success && whatsappResult.data) {
+            const response = whatsappResult.data as PhoneExistsResponse
+            const hasWhatsApp = response.exists || response.existe
+            
+            // Adicionar status de WhatsApp ao contato
+            verifiedContacts.push({
+              ...contact,
+              has_whatsapp: hasWhatsApp
+            })
+            
+            if (hasWhatsApp) {
+              verifiedCount++
+            }
+          } else {
+            // Se não conseguir verificar, assumir que não tem WhatsApp
+            verifiedContacts.push({
+              ...contact,
+              has_whatsapp: false
+            })
+          }
+        } catch (error) {
+          console.error(`Erro ao verificar WhatsApp para ${contact.phone}:`, error)
+          // Se der erro, assumir que não tem WhatsApp
+          verifiedContacts.push({
+            ...contact,
+            has_whatsapp: false
+          })
+        }
+      }
+
+      toast.dismiss('verify-whatsapp')
+      toast.success(`✅ Verificação concluída! ${verifiedCount} de ${csvContacts.length} contatos têm WhatsApp.`)
+
+      // Continuar com a importação
+      setImportProgress(60)
+      
       // Simular progresso da importação
       const progressInterval = setInterval(() => {
         setImportProgress(prev => {
@@ -390,12 +453,12 @@ export function ContactsTab() {
             clearInterval(progressInterval)
             return prev
           }
-          return prev + 10
+          return prev + 5
         })
       }, 200)
 
       // Importar contatos com verificação de duplicatas
-      const result = await importContactsFromCSV(csvContacts)
+      const result = await importContactsFromCSV(verifiedContacts)
 
       clearInterval(progressInterval)
       setImportProgress(100)
@@ -403,7 +466,7 @@ export function ContactsTab() {
       if (result.success && result.data) {
         const { imported, duplicates, errors, tagsCreated, createdTags } = result.data
         
-        let message = `Importação concluída! ${imported} contatos importados`
+        let message = `Importação concluída! ${imported} contatos importados (${verifiedCount} com WhatsApp)`
         if (duplicates > 0) message += `, ${duplicates} duplicados removidos`
         if (errors > 0) message += `, ${errors} erros`
         if (tagsCreated > 0) message += `, ${tagsCreated} etiquetas criadas: ${createdTags.join(', ')}`
