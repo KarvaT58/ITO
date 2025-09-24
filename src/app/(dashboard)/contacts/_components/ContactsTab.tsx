@@ -37,7 +37,8 @@ import {
   importContactsFromCSV,
   deleteContacts,
   checkPhoneExists,
-  modifyContactBlocked
+  modifyContactBlocked,
+  reportContact
 } from '@/server/actions/contacts'
 import { listZapiInstances } from '@/server/actions/zapi'
 
@@ -572,6 +573,38 @@ export function ContactsTab() {
     }
   }
 
+  const handleReportContact = async (contact: Contact) => {
+    try {
+      // Buscar instâncias Z-API disponíveis
+      const instances = await listZapiInstances()
+      
+      if (!instances || instances.length === 0) {
+        toast.error('Nenhuma instância Z-API configurada')
+        return
+      }
+
+      // Usar a primeira instância disponível
+      const instance = instances[0]
+      
+      toast.loading(`Denunciando ${contact.name}...`, { id: 'report-contact' })
+      
+      // Denunciar contato via Z-API
+      const result = await reportContact(instance.id, contact.phone)
+      
+      if (result.success && result.data) {
+        toast.dismiss('report-contact')
+        toast.success(`✅ ${contact.name} foi denunciado com sucesso!`)
+      } else {
+        toast.dismiss('report-contact')
+        toast.error('Erro ao denunciar contato')
+      }
+    } catch (error) {
+      toast.dismiss('report-contact')
+      console.error('Erro ao denunciar contato:', error)
+      toast.error('Erro ao denunciar contato')
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -912,7 +945,7 @@ export function ContactsTab() {
                           <Shield className="h-4 w-4 mr-2" />
                           {contact.is_blocked ? 'Desbloquear' : 'Bloquear'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
+                        <DropdownMenuItem onClick={() => handleReportContact(contact)}>
                           <Flag className="h-4 w-4 mr-2" />
                           Denunciar
                         </DropdownMenuItem>
