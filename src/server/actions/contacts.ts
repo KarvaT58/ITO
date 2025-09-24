@@ -55,27 +55,46 @@ function normalizePhoneNumber(phone: string): string {
 
 // Função para gerar variações de um número para verificação
 function getPhoneVariations(phone: string): string[] {
-  const normalized = normalizePhoneNumber(phone)
-  const variations = [normalized]
+  const cleanPhone = phone.replace(/\D/g, '')
+  const variations = []
   
-  // Se o número normalizado tem 12 dígitos, cria versão com 9
-  if (normalized.length === 12 && normalized.startsWith('55')) {
-    const ddd = normalized.substring(2, 4)
-    const number = normalized.substring(4)
+  console.log('Gerando variações para:', phone, '→', cleanPhone)
+  
+  // Se não começa com 55, adiciona
+  let processedPhone = cleanPhone
+  if (!cleanPhone.startsWith('55') && cleanPhone.length >= 10) {
+    processedPhone = '55' + cleanPhone
+  }
+  
+  // Se começa com 55, processa
+  if (processedPhone.startsWith('55') && processedPhone.length >= 12) {
+    const ddd = processedPhone.substring(2, 4)
+    const number = processedPhone.substring(4)
+    
+    console.log('DDD:', ddd, 'Número original:', number, 'Tamanho:', number.length)
+    
+    // Adiciona a versão original
+    variations.push(processedPhone)
+    
+    // Se tem 8 dígitos (sem 9), cria versão com 9
     if (number.length === 8) {
-      variations.push(`55${ddd}9${number}`)
+      const with9 = `55${ddd}9${number}`
+      variations.push(with9)
+      console.log('Adicionando versão com 9:', with9)
     }
-  }
-  
-  // Se o número normalizado tem 13 dígitos, cria versão sem 9
-  if (normalized.length === 13 && normalized.startsWith('55')) {
-    const ddd = normalized.substring(2, 4)
-    const number = normalized.substring(4)
+    
+    // Se tem 9 dígitos (com 9), cria versão sem 9
     if (number.length === 9 && number.startsWith('9')) {
-      variations.push(`55${ddd}${number.substring(1)}`)
+      const without9 = `55${ddd}${number.substring(1)}`
+      variations.push(without9)
+      console.log('Adicionando versão sem 9:', without9)
     }
+  } else {
+    // Se não tem 55, adiciona como está
+    variations.push(processedPhone)
   }
   
+  console.log('Variações finais:', variations)
   return variations
 }
 
