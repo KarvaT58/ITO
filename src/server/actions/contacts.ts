@@ -373,3 +373,86 @@ export async function deleteTag(id: string) {
     return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
   }
 }
+
+// Função para sincronizar contatos da ZAPI
+export async function syncContactsFromZApi(instanceId: string) {
+  try {
+    // Buscar contatos da ZAPI
+    const result = await Zapi.getContacts({
+      instanceId: instanceId,
+      instanceToken: 'token',
+      clientSecurityToken: 'security_token'
+    })
+
+    if (!result || !Array.isArray(result)) {
+      return { success: false, error: 'Nenhum contato encontrado na ZAPI' }
+    }
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return { success: false, error: 'Usuário não autenticado' }
+    }
+
+    const syncedContacts = []
+
+    // Processar cada contato da ZAPI
+    for (const zapiContact of result) {
+      try {
+        // Verificar se contato já existe
+        const { data: existingContact } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('phone', zapiContact.telefone)
+          .single()
+
+        if (existingContact) {
+          // Atualizar contato existente
+          await supabase
+            .from('contacts')
+            .update({
+              name: zapiContact.name || zapiContact.short || 'Contato',
+              short: zapiContact.short,
+              notify: zapiContact.notify,
+              vname: zapiContact.vname,
+              img_url: zapiContact.imgUrl,
+              has_whatsapp: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingContact.id)
+        } else {
+          // Criar novo contato
+          const { data: newContact } = await supabase
+            .from('contacts')
+            .insert({
+              user_id: user.id,
+              name: zapiContact.name || zapiContact.short || 'Contato',
+              short: zapiContact.short,
+              phone: zapiContact.telefone,
+              notify: zapiContact.notify,
+              vname: zapiContact.vname,
+              img_url: zapiContact.imgUrl,
+              has_whatsapp: true,
+              tags: []
+            })
+            .select()
+            .single()
+
+          if (newContact) {
+            syncedContacts.push(newContact)
+          }
+        }
+      } catch (contactError) {
+        console.error('Erro ao processar contato:', contactError)
+        // Continuar com os outros contatos
+      }
+    }
+
+    return { success: true, data: syncedContacts }
+  } catch (error) {
+    console.error('Erro ao sincronizar contatos da ZAPI:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}

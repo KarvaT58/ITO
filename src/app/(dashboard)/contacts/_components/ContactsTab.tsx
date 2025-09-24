@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -8,46 +8,42 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { 
   Plus, 
   MoreVertical, 
   Phone, 
-  Mail, 
   Tag, 
   Upload, 
   Search,
   User,
   UserPlus,
-  UserMinus,
   Shield,
   Flag,
   Eye,
   CheckCircle,
-  XCircle
+  XCircle,
+  RefreshCw
 } from "lucide-react"
 import { toast } from "sonner"
 import { 
   addContactsToZApi, 
   createContact,
   getContacts,
-  getTags
+  getTags,
+  createTag,
+  syncContactsFromZApi
 } from '@/server/actions/contacts'
 
 // Tipos
 interface Contact {
   id: string
   name: string
-  short?: string
   phone: string
   email?: string
   tags: string[]
-  notify?: string
-  vname?: string
-  imgUrl?: string
-  isBlocked?: boolean
-  hasWhatsApp?: boolean
+  isBlocked: boolean
+  hasWhatsapp: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -92,7 +88,6 @@ export function ContactsTab() {
     tags: [] as string[]
   })
 
-  const [csvData, setCsvData] = useState('')
   const [newTag, setNewTag] = useState({
     name: '',
     color: '#3b82f6'
@@ -179,6 +174,31 @@ export function ContactsTab() {
     }
   }
 
+  const handleSyncFromZApi = async () => {
+    if (!selectedInstance) {
+      toast.error('Nenhuma instância selecionada')
+      return
+    }
+
+    try {
+      toast.loading('Sincronizando contatos da ZAPI...', { id: 'sync-contacts' })
+      const result = await syncContactsFromZApi(selectedInstance.id)
+      
+      if (result.success) {
+        toast.dismiss('sync-contacts')
+        toast.success(`${result.data?.length || 0} contato(s) sincronizado(s)`)
+        loadContacts()
+      } else {
+        toast.dismiss('sync-contacts')
+        toast.error(result.error || 'Erro ao sincronizar contatos')
+      }
+    } catch (error) {
+      console.error('Erro ao sincronizar contatos:', error)
+      toast.dismiss('sync-contacts')
+      toast.error('Erro ao sincronizar contatos')
+    }
+  }
+
   // Funções de gerenciamento
   const handleAddContact = async () => {
     if (!newContact.firstName || !newContact.phone) {
@@ -190,17 +210,21 @@ export function ContactsTab() {
       const result = await createContact({
         name: `${newContact.firstName} ${newContact.lastName}`.trim(),
         phone: newContact.phone,
-        email: newContact.email,
-        tags: newContact.tags,
-        hasWhatsApp: false,
-        isBlocked: false
+        email: newContact.email || undefined,
+        tags: newContact.tags
       })
 
       if (result.success) {
-        setNewContact({ firstName: '', lastName: '', phone: '', email: '', tags: [] })
+        toast.success('Contato adicionado com sucesso!')
+        setNewContact({
+          firstName: '',
+          lastName: '',
+          phone: '',
+          email: '',
+          tags: []
+        })
         setIsAddContactOpen(false)
-        loadContacts() // Recarregar lista
-        toast.success('Contato adicionado com sucesso')
+        loadContacts()
       } else {
         toast.error(result.error || 'Erro ao adicionar contato')
       }
@@ -210,395 +234,275 @@ export function ContactsTab() {
     }
   }
 
-  const handleImportCSV = async () => {
-    if (!csvData.trim()) {
-      toast.error('Dados CSV são obrigatórios')
-      return
-    }
-
-    try {
-      const lines = csvData.trim().split('\n')
-      const headers = lines[0].split(',').map(h => h.trim())
-      
-      if (!headers.includes('Nome') || !headers.includes('Numero')) {
-        toast.error('CSV deve conter colunas "Nome" e "Numero"')
-        return
-      }
-
-      const importedContacts: Contact[] = []
-      
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim())
-        const nameIndex = headers.indexOf('Nome')
-        const phoneIndex = headers.indexOf('Numero')
-        const emailIndex = headers.indexOf('Email')
-        const tagIndex = headers.indexOf('Etiqueta')
-
-        if (values[nameIndex] && values[phoneIndex]) {
-          const contact: Contact = {
-            id: Date.now().toString() + i,
-            name: values[nameIndex],
-            phone: values[phoneIndex],
-            email: emailIndex >= 0 ? values[emailIndex] : undefined,
-            tags: tagIndex >= 0 && values[tagIndex] ? [values[tagIndex]] : [],
-            hasWhatsApp: false,
-            isBlocked: false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-          importedContacts.push(contact)
-        }
-      }
-
-      setContacts(prev => [...prev, ...importedContacts])
-      setCsvData('')
-      setIsImportOpen(false)
-      toast.success(`${importedContacts.length} contato(s) importado(s)`)
-    } catch (error) {
-      console.error('Erro ao importar CSV:', error)
-      toast.error('Erro ao importar CSV')
-    }
-  }
-
-  const handleAddTag = async () => {
-    if (!newTag.name.trim()) {
+  const handleCreateTag = async () => {
+    if (!newTag.name) {
       toast.error('Nome da etiqueta é obrigatório')
       return
     }
 
     try {
-      const tag: Tag = {
-        id: Date.now().toString(),
+      const result = await createTag({
         name: newTag.name,
         color: newTag.color,
-        contactsCount: 0
-      }
+        contacts_count: 0
+      })
 
-      setTags(prev => [...prev, tag])
-      setNewTag({ name: '', color: '#3b82f6' })
-      toast.success('Etiqueta criada com sucesso')
+      if (result.success) {
+        toast.success('Etiqueta criada com sucesso!')
+        setNewTag({ name: '', color: '#3b82f6' })
+        loadTags()
+      } else {
+        toast.error(result.error || 'Erro ao criar etiqueta')
+      }
     } catch (error) {
       console.error('Erro ao criar etiqueta:', error)
       toast.error('Erro ao criar etiqueta')
     }
   }
 
-  const handleDeleteTag = async (tagId: string) => {
-    try {
-      setTags(prev => prev.filter(tag => tag.id !== tagId))
-      setContacts(prev => prev.map(contact => ({
-        ...contact,
-        tags: contact.tags.filter(tagName => 
-          tags.find(tag => tag.id === tagId)?.name !== tagName
-        )
-      })))
-      toast.success('Etiqueta removida')
-    } catch (error) {
-      console.error('Erro ao remover etiqueta:', error)
-      toast.error('Erro ao remover etiqueta')
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Por favor, selecione um arquivo CSV')
+      return
     }
+
+    // Aqui você implementaria a lógica de importação CSV
+    toast.info('Funcionalidade de importação CSV em desenvolvimento')
   }
 
-  // Filtros
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.phone.includes(searchTerm) ||
-                         contact.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesTag = selectedTag === 'all' || contact.tags.includes(selectedTag)
-    
-    return matchesSearch && matchesTag
-  })
-
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Contatos</h1>
-            <p className="text-muted-foreground">
-              Gerencie seus contatos do WhatsApp
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Button onClick={() => setIsAddContactOpen(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Adicionar Contato
-            </Button>
-            
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-              <Upload className="h-4 w-4 mr-2" />
-              Importar CSV
-            </Button>
-            
-            <Button variant="outline" onClick={() => setIsTagManagerOpen(true)}>
-              <Tag className="h-4 w-4 mr-2" />
-              Gerenciar Etiquetas
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="border-b bg-card p-4">
+    <div className="space-y-6">
+      {/* Header com ações */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar contatos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Label>Etiqueta:</Label>
-            <select
-              value={selectedTag}
-              onChange={(e) => setSelectedTag(e.target.value)}
-              className="px-3 py-2 border rounded-md bg-background"
-            >
-              <option value="all">Todas</option>
-              {tags.map(tag => (
-                <option key={tag.id} value={tag.name}>{tag.name}</option>
-              ))}
-            </select>
-          </div>
+          <Button onClick={() => setIsAddContactOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Contato
+          </Button>
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Importar CSV
+          </Button>
+          <Button variant="outline" onClick={() => setIsTagManagerOpen(true)}>
+            <Tag className="h-4 w-4 mr-2" />
+            Gerenciar Etiquetas
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleSyncFromZApi}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Sincronizar ZAPI
+          </Button>
+          <Button variant="outline" onClick={() => handleAddContactsToZApi(contacts)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar Todos à ZAPI
+          </Button>
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
-      <div className="flex-1 overflow-auto p-6">
-        <Tabs defaultValue="contacts" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="contacts">Contatos ({filteredContacts.length})</TabsTrigger>
-            <TabsTrigger value="tags">Etiquetas ({tags.length})</TabsTrigger>
-            <TabsTrigger value="zapi">ZAPI</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="contacts" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Contatos</CardTitle>
-                <CardDescription>
-                  {filteredContacts.length} contato(s) encontrado(s)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Etiquetas</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredContacts.map((contact) => (
-                      <TableRow key={contact.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            {contact.name}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            {contact.phone}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {contact.email && (
-                            <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                              {contact.email}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            {contact.tags.map((tagName, index) => {
-                              const tag = tags.find(t => t.name === tagName)
-                              return (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  style={{ backgroundColor: tag?.color + '20', color: tag?.color }}
-                                >
-                                  {tagName}
-                                </Badge>
-                              )
-                            })}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {contact.hasWhatsApp ? (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-red-500" />
-                            )}
-                            {contact.isBlocked && (
-                              <Shield className="h-4 w-4 text-orange-500" />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedContact(contact)
-                                setIsContactDetailsOpen(true)
-                              }}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver Detalhes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
-                                <Phone className="h-4 w-4 mr-2" />      
-                                Verificar WhatsApp
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
-                                <Shield className="h-4 w-4 mr-2" />
-                                {contact.isBlocked ? 'Desbloquear' : 'Bloquear'}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
-                                <Flag className="h-4 w-4 mr-2" />
-                                Denunciar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="tags" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Etiquetas</CardTitle>
-                <CardDescription>
-                  Organize seus contatos com etiquetas personalizadas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {tags.map((tag) => (
-                    <Card key={tag.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: tag.color }}
-                            />
-                            <span className="font-medium">{tag.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary">
-                              {tag.contactsCount} contatos
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteTag(tag.id)}
-                            >
-                              <UserMinus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="zapi" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Integração ZAPI</CardTitle>
-                <CardDescription>
-                  Sincronize seus contatos com a ZAPI
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Button onClick={() => handleAddContactsToZApi(contacts)}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Adicionar Todos à ZAPI
-                    </Button>
-                    <Button variant="outline" onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
-                      <UserMinus className="h-4 w-4 mr-2" />
-                      Remover Todos da ZAPI
-                    </Button>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <p>• Adicionar contatos: Salva contatos na agenda do WhatsApp</p>
-                    <p>• Remover contatos: Remove contatos da agenda do WhatsApp</p>
-                    <p>• Verificar WhatsApp: Confirma se número tem WhatsApp</p>
-                    <p>• Bloquear/Desbloquear: Controla bloqueio de contatos</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+      {/* Busca e filtros */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Buscar contatos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Label htmlFor="tag-filter">Etiqueta:</Label>
+          <select
+            id="tag-filter"
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value)}
+            className="px-3 py-2 border rounded-md bg-background"
+          >
+            <option value="all">Todas</option>
+            {tags.map(tag => (
+              <option key={tag.id} value={tag.name}>{tag.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Contatos</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{contacts.length}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Com WhatsApp</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {contacts.filter(c => c.hasWhatsapp).length}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bloqueados</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {contacts.filter(c => c.isBlocked).length}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Etiquetas</CardTitle>
+            <Tag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{tags.length}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lista de contatos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Contatos</CardTitle>
+          <CardDescription>
+            {contacts.length} contato(s) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Etiquetas</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {contacts.map((contact) => (
+                <TableRow key={contact.id}>
+                  <TableCell className="font-medium">{contact.name}</TableCell>
+                  <TableCell>{contact.phone}</TableCell>
+                  <TableCell>{contact.email || '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {contact.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {contact.hasWhatsapp ? (
+                        <Badge variant="default" className="bg-green-500">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          WhatsApp
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Sem WhatsApp
+                        </Badge>
+                      )}
+                      {contact.isBlocked && (
+                        <Badge variant="destructive">
+                          <Shield className="h-3 w-3 mr-1" />
+                          Bloqueado
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setSelectedContact(contact)
+                          setIsContactDetailsOpen(true)
+                        }}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver Detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
+                          <Phone className="h-4 w-4 mr-2" />      
+                          Verificar WhatsApp
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
+                          <Shield className="h-4 w-4 mr-2" />
+                          {contact.isBlocked ? 'Desbloquear' : 'Bloquear'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
+                          <Flag className="h-4 w-4 mr-2" />
+                          Denunciar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Modal Adicionar Contato */}
       <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Adicionar Contato</DialogTitle>
             <DialogDescription>
-              Adicione um novo contato manualmente
+              Adicione um novo contato ao seu sistema.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4">
+          <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="firstName">Nome *</Label>
                 <Input
                   id="firstName"
                   value={newContact.firstName}
                   onChange={(e) => setNewContact(prev => ({ ...prev, firstName: e.target.value }))}
-                  placeholder="Nome"
+                  placeholder="João"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="lastName">Sobrenome</Label>
                 <Input
                   id="lastName"
                   value={newContact.lastName}
                   onChange={(e) => setNewContact(prev => ({ ...prev, lastName: e.target.value }))}
-                  placeholder="Sobrenome"
+                  placeholder="Silva"
                 />
               </div>
             </div>
-            
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="phone">Telefone *</Label>
               <Input
                 id="phone"
@@ -607,48 +511,23 @@ export function ContactsTab() {
                 placeholder="5511999999999"
               />
             </div>
-            
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={newContact.email}
                 onChange={(e) => setNewContact(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="email@exemplo.com"
+                placeholder="joao@exemplo.com"
               />
             </div>
-            
-            <div>
-              <Label>Etiquetas</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map(tag => (
-                  <Badge
-                    key={tag.id}
-                    variant={newContact.tags.includes(tag.name) ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setNewContact(prev => ({
-                        ...prev,
-                        tags: prev.tags.includes(tag.name)
-                          ? prev.tags.filter(t => t !== tag.name)
-                          : [...prev.tags, tag.name]
-                      }))
-                    }}
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
           </div>
-          
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddContactOpen(false)}>
               Cancelar
             </Button>
             <Button onClick={handleAddContact}>
-              Adicionar
+              Adicionar Contato
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -656,40 +535,39 @@ export function ContactsTab() {
 
       {/* Modal Importar CSV */}
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Importar Contatos via CSV</DialogTitle>
             <DialogDescription>
-              Cole os dados CSV no formato: Nome,Numero,Email,Etiqueta
+              Faça upload de um arquivo CSV com seus contatos.
             </DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="csvData">Dados CSV</Label>
-              <textarea
-                id="csvData"
-                value={csvData}
-                onChange={(e) => setCsvData(e.target.value)}
-                placeholder="Nome,Numero,Email,Etiqueta&#10;João Silva,5511999999999,joao@email.com,Cliente&#10;Maria Santos,5511888888888,maria@email.com,VIP"
-                className="w-full h-32 p-3 border rounded-md resize-none"
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-2">
+                Arraste e solte seu arquivo CSV aqui
+              </p>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="csv-upload"
               />
+              <Button variant="outline" onClick={() => document.getElementById('csv-upload')?.click()}>
+                Selecionar Arquivo
+              </Button>
             </div>
-            
             <div className="text-sm text-muted-foreground">
               <p><strong>Formato esperado:</strong></p>
-              <p>• Primeira linha: cabeçalhos (Nome, Numero, Email, Etiqueta)</p>
-              <p>• Colunas obrigatórias: Nome, Numero</p>
-              <p>• Colunas opcionais: Email, Etiqueta</p>
+              <p>Nome, Telefone, Email, Etiqueta</p>
+              <p className="text-xs mt-1">Exemplo: João Silva, 5511999999999, joao@email.com, Cliente</p>
             </div>
           </div>
-          
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsImportOpen(false)}>
               Cancelar
-            </Button>
-            <Button onClick={handleImportCSV}>
-              Importar
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -697,58 +575,65 @@ export function ContactsTab() {
 
       {/* Modal Gerenciar Etiquetas */}
       <Dialog open={isTagManagerOpen} onOpenChange={setIsTagManagerOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Gerenciar Etiquetas</DialogTitle>
             <DialogDescription>
-              Crie e gerencie etiquetas para organizar seus contatos
+              Crie e gerencie etiquetas para organizar seus contatos.
             </DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4">
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <Label htmlFor="tagName">Nome da Etiqueta</Label>
               <Input
-                placeholder="Nome da etiqueta"
+                id="tagName"
                 value={newTag.name}
                 onChange={(e) => setNewTag(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Ex: Cliente VIP"
               />
-              <Input
-                type="color"
-                value={newTag.color}
-                onChange={(e) => setNewTag(prev => ({ ...prev, color: e.target.value }))}
-                className="w-16"
-              />
-              <Button onClick={handleAddTag}>
-                <Plus className="h-4 w-4" />
-              </Button>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tagColor">Cor</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="tagColor"
+                  type="color"
+                  value={newTag.color}
+                  onChange={(e) => setNewTag(prev => ({ ...prev, color: e.target.value }))}
+                  className="w-12 h-10"
+                />
+                <Input
+                  value={newTag.color}
+                  onChange={(e) => setNewTag(prev => ({ ...prev, color: e.target.value }))}
+                  placeholder="#3b82f6"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              {tags.map((tag) => (
-                <div key={tag.id} className="flex items-center justify-between p-2 border rounded">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span>{tag.name}</span>
+              <Label>Etiquetas Existentes</Label>
+              <div className="max-h-32 overflow-y-auto space-y-1">
+                {tags.map(tag => (
+                  <div key={tag.id} className="flex items-center justify-between p-2 border rounded">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      <span className="text-sm">{tag.name}</span>
+                    </div>
                     <Badge variant="secondary">{tag.contactsCount}</Badge>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteTag(tag.id)}
-                  >
-                    <UserMinus className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-          
           <DialogFooter>
-            <Button onClick={() => setIsTagManagerOpen(false)}>
-              Fechar
+            <Button variant="outline" onClick={() => setIsTagManagerOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateTag}>
+              Criar Etiqueta
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -756,85 +641,77 @@ export function ContactsTab() {
 
       {/* Modal Detalhes do Contato */}
       <Dialog open={isContactDetailsOpen} onOpenChange={setIsContactDetailsOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Detalhes do Contato</DialogTitle>
             <DialogDescription>
-              Informações completas do contato
+              Informações completas do contato selecionado.
             </DialogDescription>
           </DialogHeader>
-          
           {selectedContact && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Nome</Label>
-                  <p className="text-sm font-medium">{selectedContact.name}</p>
+                  <Label className="text-sm font-medium">Nome</Label>
+                  <p className="text-sm text-muted-foreground">{selectedContact.name}</p>
                 </div>
                 <div>
-                  <Label>Telefone</Label>
-                  <p className="text-sm font-medium">{selectedContact.phone}</p>
+                  <Label className="text-sm font-medium">Telefone</Label>
+                  <p className="text-sm text-muted-foreground">{selectedContact.phone}</p>
                 </div>
               </div>
-              
-              {selectedContact.email && (
-                <div>
-                  <Label>Email</Label>
-                  <p className="text-sm font-medium">{selectedContact.email}</p>
-                </div>
-              )}
-              
               <div>
-                <Label>Etiquetas</Label>
-                <div className="flex gap-2 mt-1">
-                  {selectedContact.tags.map((tagName, index) => {
-                    const tag = tags.find(t => t.name === tagName)
-                    return (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        style={{ backgroundColor: tag?.color + '20', color: tag?.color }}
-                      >
-                        {tagName}
-                      </Badge>
-                    )
-                  })}
+                <Label className="text-sm font-medium">Email</Label>
+                <p className="text-sm text-muted-foreground">{selectedContact.email || 'Não informado'}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Etiquetas</Label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedContact.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>WhatsApp</Label>
-                  <div className="flex items-center gap-2">
-                    {selectedContact.hasWhatsApp ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                  <Label className="text-sm font-medium">Status WhatsApp</Label>
+                  <div className="flex items-center gap-1 mt-1">
+                    {selectedContact.hasWhatsapp ? (
+                      <Badge variant="default" className="bg-green-500">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Tem WhatsApp
+                      </Badge>
                     ) : (
-                      <XCircle className="h-4 w-4 text-red-500" />
+                      <Badge variant="secondary">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Sem WhatsApp
+                      </Badge>
                     )}
-                    <span className="text-sm">
-                      {selectedContact.hasWhatsApp ? 'Tem WhatsApp' : 'Sem WhatsApp'}
-                    </span>
                   </div>
                 </div>
                 <div>
-                  <Label>Status</Label>
-                  <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">Status Bloqueio</Label>
+                  <div className="flex items-center gap-1 mt-1">
                     {selectedContact.isBlocked ? (
-                      <Shield className="h-4 w-4 text-orange-500" />
+                      <Badge variant="destructive">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Bloqueado
+                      </Badge>
                     ) : (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <Badge variant="default" className="bg-green-500">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Ativo
+                      </Badge>
                     )}
-                    <span className="text-sm">
-                      {selectedContact.isBlocked ? 'Bloqueado' : 'Ativo'}
-                    </span>
                   </div>
                 </div>
               </div>
             </div>
           )}
-          
           <DialogFooter>
-            <Button onClick={() => setIsContactDetailsOpen(false)}>
+            <Button variant="outline" onClick={() => setIsContactDetailsOpen(false)}>
               Fechar
             </Button>
           </DialogFooter>
