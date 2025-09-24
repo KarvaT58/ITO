@@ -39,7 +39,8 @@ import {
   checkPhoneExists,
   modifyContactBlocked,
   reportContact,
-  getContactImage
+  getContactImage,
+  removeContactsFromZApi
 } from '@/server/actions/contacts'
 import { listZapiInstances } from '@/server/actions/zapi'
 
@@ -110,6 +111,8 @@ export function ContactsTab() {
   const [isEditContactOpen, setIsEditContactOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [contactImage, setContactImage] = useState<string | null>(null)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [contactsToDelete, setContactsToDelete] = useState<string[]>([])
   const [editingContact, setEditingContact] = useState({
     id: '',
     name: '',
@@ -315,6 +318,7 @@ export function ContactsTab() {
     }
 
     try {
+      // 1. Adicionar contato no sistema
       const result = await createContact({
         name: `${newContact.firstName} ${newContact.lastName}`.trim(),
         phone: newContact.phone,
@@ -323,7 +327,32 @@ export function ContactsTab() {
       })
 
       if (result.success) {
-        toast.success('Contato adicionado com sucesso!')
+        // 2. Adicionar contato no WhatsApp via Z-API
+        try {
+          const instances = await listZapiInstances()
+          
+          if (instances && instances.length > 0) {
+            const instance = instances[0]
+            
+            const zapiResult = await addContactsToZApi(instance.id, [{
+              firstName: newContact.firstName,
+              lastName: newContact.lastName || undefined,
+              phone: newContact.phone
+            }])
+            
+            if (zapiResult.success) {
+              toast.success('Contato adicionado com sucesso no sistema e no WhatsApp!')
+            } else {
+              toast.success('Contato adicionado no sistema, mas falhou ao adicionar no WhatsApp')
+            }
+          } else {
+            toast.success('Contato adicionado no sistema (Z-API não configurada)')
+          }
+        } catch (zapiError) {
+          console.error('Erro ao adicionar no WhatsApp:', zapiError)
+          toast.success('Contato adicionado no sistema, mas falhou ao adicionar no WhatsApp')
+        }
+        
         setNewContact({
           firstName: '',
           lastName: '',
@@ -834,20 +863,55 @@ export function ContactsTab() {
     }
   }
 
-  // Função para deletar contato individual
-  const handleDeleteContact = async (contactIds: string[]) => {
+  // Função para abrir modal de confirmação de remoção
+  const handleDeleteContact = (contactIds: string[]) => {
+    setContactsToDelete(contactIds)
+    setIsDeleteConfirmOpen(true)
+  }
+
+  // Função para confirmar e executar a remoção
+  const handleConfirmDelete = async () => {
     try {
-      const result = await deleteContacts(contactIds)
+      // 1. Buscar contatos antes de deletar para obter os telefones
+      const contactsToDeleteList = contacts.filter(contact => contactsToDelete.includes(contact.id))
+      const phoneNumbers = contactsToDeleteList.map(contact => contact.phone)
+      
+      // 2. Deletar contatos do sistema
+      const result = await deleteContacts(contactsToDelete)
       
       if (result.success) {
-        toast.success(`${result.deletedCount} contato(s) deletado(s) com sucesso`)
+        // 3. Remover contatos do WhatsApp via Z-API
+        try {
+          const instances = await listZapiInstances()
+          
+          if (instances && instances.length > 0 && phoneNumbers.length > 0) {
+            const instance = instances[0]
+            
+            const zapiResult = await removeContactsFromZApi(instance.id, phoneNumbers)
+            
+            if (zapiResult.success) {
+              toast.success(`${result.deletedCount} contato(s) removido(s) com sucesso do sistema e do WhatsApp!`)
+            } else {
+              toast.success(`${result.deletedCount} contato(s) removido(s) do sistema, mas falhou ao remover do WhatsApp`)
+            }
+          } else {
+            toast.success(`${result.deletedCount} contato(s) removido(s) do sistema (Z-API não configurada)`)
+          }
+        } catch (zapiError) {
+          console.error('Erro ao remover do WhatsApp:', zapiError)
+          toast.success(`${result.deletedCount} contato(s) removido(s) do sistema, mas falhou ao remover do WhatsApp`)
+        }
+        
         loadContacts(currentPage) // Recarregar a página atual
       } else {
-        toast.error(result.error || 'Erro ao deletar contatos')
+        toast.error(result.error || 'Erro ao remover contatos')
       }
     } catch (error) {
-      console.error('Erro ao deletar contatos:', error)
-      toast.error('Erro ao deletar contatos')
+      console.error('Erro ao remover contatos:', error)
+      toast.error('Erro ao remover contatos')
+    } finally {
+      setIsDeleteConfirmOpen(false)
+      setContactsToDelete([])
     }
   }
 
@@ -1067,7 +1131,7 @@ export function ContactsTab() {
                           className="text-red-600 focus:text-red-600"
                         >
                           <XCircle className="h-4 w-4 mr-2" />
-                          Apagar Contato
+                          Remover Contatos
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -1610,6 +1674,34 @@ export function ContactsTab() {
             </Button>
             <Button onClick={handleSaveContactEdit}>
               Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmação de Remoção */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar Remoção</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja remover {contactsToDelete.length} contato(s)? 
+              Esta ação removerá os contatos tanto do sistema quanto do WhatsApp e não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteConfirmOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDelete}
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Remover Contatos
             </Button>
           </DialogFooter>
         </DialogContent>
