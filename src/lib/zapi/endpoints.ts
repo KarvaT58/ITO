@@ -90,4 +90,45 @@ export const Zapi = {
       method: 'PUT',
       body: notifySentByMe == null ? { valor: url } : { valor: url, notifySentByMe }
     }),
+
+  // Contatos - Adicionar
+  addContacts: (ctx: ZApiActionContext, contacts: Array<{firstName: string, lastName?: string, phone: string}>) =>
+    zapiFetch({ ...ctx, path: '/contacts/add', method: 'POST', body: contacts }),
+
+  // Contatos - Remover
+  removeContacts: (ctx: ZApiActionContext, phones: string[]) =>
+    zapiFetch({ ...ctx, path: '/contacts/remove', method: 'DELETE', body: phones }),
+
+  // Contatos - Pegar metadata
+  getContactMetadata: (ctx: ZApiActionContext, phone: string) =>
+    zapiFetch({ ...ctx, path: `/contacts/${phone}`, method: 'GET' }),
+
+  // Contatos - Pegar imagem
+  getContactImage: (ctx: ZApiActionContext, phone: string) =>
+    zapiFetch({ ...ctx, path: '/profile-picture', method: 'GET', query: { phone } }),
+
+  // Contatos - Verificar se tem WhatsApp
+  checkPhoneExists: (ctx: ZApiActionContext, phone: string) =>
+    zapiFetch({ ...ctx, path: `/phone-exists/${phone}`, method: 'GET' }),
+
+  // Contatos - Verificar em lote
+  checkPhoneExistsBatch: (ctx: ZApiActionContext, phones: string[]) =>
+    zapiFetch({ ...ctx, path: '/phone-exists-batch', method: 'POST', body: { phones } }),
+
+  // Contatos - Bloquear/Desbloquear
+  modifyContactBlocked: (ctx: ZApiActionContext, phone: string, action: 'block' | 'unblock') =>
+    zapiFetch({ ...ctx, path: '/contacts/modify-blocked', method: 'POST', body: { phone, action } }),
+
+  // Contatos - Denunciar
+  reportContact: (ctx: ZApiActionContext, phone: string) =>
+    zapiFetch({ ...ctx, path: `/contacts/${phone}/report`, method: 'POST' }),
+
+  // Contatos - Listar
+  getContacts: (ctx: ZApiActionContext, page?: number, pageSize?: number) =>
+    zapiFetch({ 
+      ...ctx, 
+      path: '/contacts', 
+      method: 'GET', 
+      query: page && pageSize ? { page: page.toString(), pageSize: pageSize.toString() } : undefined 
+    }),
 };

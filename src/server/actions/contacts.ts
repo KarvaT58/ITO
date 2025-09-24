@@ -1,0 +1,375 @@
+'use server'
+
+import { createClient } from '@/lib/supabase'
+import { Zapi } from '@/lib/zapi/endpoints'
+
+// Tipos
+interface Contact {
+  id: string
+  name: string
+  short?: string
+  phone: string
+  email?: string
+  tags: string[]
+  notify?: string
+  vname?: string
+  imgUrl?: string
+  isBlocked?: boolean
+  hasWhatsApp?: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface Tag {
+  id: string
+  name: string
+  color: string
+  contacts_count: number
+  created_at: string
+}
+
+// Adicionar contatos à ZAPI
+export async function addContactsToZApi(instanceId: string, contacts: Array<{firstName: string, lastName?: string, phone: string}>) {
+  try {
+      const result = await Zapi.addContacts(
+        { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+        contacts
+      )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao adicionar contatos à ZAPI:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Remover contatos da ZAPI
+export async function removeContactsFromZApi(instanceId: string, phones: string[]) {
+  try {
+      const result = await Zapi.removeContacts(
+        { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+        phones
+      )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao remover contatos da ZAPI:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Verificar se número tem WhatsApp
+export async function checkPhoneExists(instanceId: string, phone: string) {
+  try {
+      const result = await Zapi.checkPhoneExists(
+        { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+        phone
+      )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao verificar número:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Verificar números em lote
+export async function checkPhoneExistsBatch(instanceId: string, phones: string[]) {
+  try {
+    const result = await Zapi.checkPhoneExistsBatch(
+      { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+      phones
+    )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao verificar números em lote:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Bloquear/desbloquear contato
+export async function modifyContactBlocked(instanceId: string, phone: string, action: 'block' | 'unblock') {
+  try {
+    const result = await Zapi.modifyContactBlocked(
+      { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+      phone,
+      action
+    )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao modificar bloqueio do contato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Denunciar contato
+export async function reportContact(instanceId: string, phone: string) {
+  try {
+    const result = await Zapi.reportContact(
+      { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+      phone
+    )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao denunciar contato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Pegar metadata do contato
+export async function getContactMetadata(instanceId: string, phone: string) {
+  try {
+    const result = await Zapi.getContactMetadata(
+      { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+      phone
+    )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao pegar metadata do contato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Pegar imagem do contato
+export async function getContactImage(instanceId: string, phone: string) {
+  try {
+    const result = await Zapi.getContactImage(
+      { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+      phone
+    )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao pegar imagem do contato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Listar contatos da ZAPI
+export async function getContactsFromZApi(instanceId: string, page?: number, pageSize?: number) {
+  try {
+    const result = await Zapi.getContacts(
+      { 
+          instanceId: instanceId,
+          instanceToken: 'token',
+          clientSecurityToken: 'security_token'
+        },
+      page,
+      pageSize
+    )
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao listar contatos da ZAPI:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// CRUD de contatos no banco
+export async function createContact(contact: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) {
+  try {
+    const supabase = createClient()
+    
+    // Verificar autenticação
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return { success: false, error: 'Usuário não autenticado' }
+    }
+    
+    const { data, error } = await supabase
+      .from('contacts')
+      .insert([{ ...contact, user_id: user.id }])
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Erro ao criar contato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+export async function getContacts(searchTerm?: string, tagFilter?: string) {
+  try {
+    const supabase = createClient()
+    
+    // Verificar autenticação
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return { success: false, error: 'Usuário não autenticado' }
+    }
+    
+    let query = supabase
+      .from('contacts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (searchTerm) {
+      query = query.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+    }
+
+    if (tagFilter && tagFilter !== 'all') {
+      query = query.contains('tags', [tagFilter])
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Erro ao buscar contatos:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+export async function updateContact(id: string, updates: Partial<Contact>) {
+  try {
+    const supabase = createClient()
+    
+    const { data, error } = await supabase
+      .from('contacts')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Erro ao atualizar contato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+export async function deleteContact(id: string) {
+  try {
+    const supabase = createClient()
+    
+    const { error } = await supabase
+      .from('contacts')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erro ao deletar contato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// CRUD de etiquetas
+export async function createTag(tag: Omit<Tag, 'id' | 'created_at'>) {
+  try {
+    const supabase = createClient()
+    
+    const { data, error } = await supabase
+      .from('tags')
+      .insert([tag])
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Erro ao criar etiqueta:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+export async function getTags() {
+  try {
+    const supabase = createClient()
+    
+    // Verificar autenticação
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return { success: false, error: 'Usuário não autenticado' }
+    }
+    
+    const { data, error } = await supabase
+      .from('tags')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Erro ao buscar etiquetas:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+export async function updateTag(id: string, updates: Partial<Tag>) {
+  try {
+    const supabase = createClient()
+    
+    const { data, error } = await supabase
+      .from('tags')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Erro ao atualizar etiqueta:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+export async function deleteTag(id: string) {
+  try {
+    const supabase = createClient()
+    
+    const { error } = await supabase
+      .from('tags')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erro ao deletar etiqueta:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}

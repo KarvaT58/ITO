@@ -5,11 +5,17 @@ export async function zapiFetch<T>(args: {
   instanceToken: string;
   clientSecurityToken: string;
   path: string;
-  method?: 'GET' | 'PUT' | 'POST';
+  method?: 'GET' | 'PUT' | 'POST' | 'DELETE';
   body?: unknown;
+  query?: Record<string, string>;
 }): Promise<T> {
-  const { instanceId, instanceToken, clientSecurityToken, path, method = 'GET', body } = args;
-  const url = `https://api.z-api.io/instances/${instanceId}/token/${instanceToken}${path}`;
+  const { instanceId, instanceToken, clientSecurityToken, path, method = 'GET', body, query } = args;
+  let url = `https://api.z-api.io/instances/${instanceId}/token/${instanceToken}${path}`;
+  
+  if (query) {
+    const searchParams = new URLSearchParams(query);
+    url += `?${searchParams.toString()}`;
+  }
   const headers: Record<string, string> = {
     'Client-Token': clientSecurityToken
   };
