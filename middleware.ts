@@ -69,6 +69,7 @@ export async function middleware(req: NextRequest) {
   console.log('Middleware - Rota:', req.nextUrl.pathname, 'Protegida:', isProtectedRoute, 'Sessão:', !!session)
 
   if (isProtectedRoute && !session) {
+    console.log('Redirecionando para login - usuário não autenticado')
     // Redirecionar para login se não estiver autenticado
     const redirectUrl = new URL('/login', req.url)
     redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
@@ -77,6 +78,7 @@ export async function middleware(req: NextRequest) {
 
   // Se estiver na página de login e já estiver autenticado, redirecionar para dashboard
   if (req.nextUrl.pathname === '/login' && session) {
+    console.log('Usuário autenticado em /login, redirecionando para dashboard')
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 

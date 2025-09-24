@@ -167,8 +167,19 @@ export function LoginForm({
         setTimeout(async () => {
           try {
             console.log('Tentando redirecionamento...')
+            
+            // Tentar router.push primeiro
             await router.push("/dashboard")
             console.log('Redirecionamento via router.push executado')
+            
+            // Verificar se realmente redirecionou após um tempo
+            setTimeout(() => {
+              if (window.location.pathname !== '/dashboard') {
+                console.log('Router.push não funcionou, usando fallback')
+                window.location.href = "/dashboard"
+              }
+            }, 500)
+            
           } catch (routerError) {
             console.error('Erro no router.push:', routerError)
             // Fallback: redirecionamento direto
