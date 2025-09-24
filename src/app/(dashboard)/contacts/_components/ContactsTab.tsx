@@ -491,10 +491,6 @@ export function ContactsTab() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Sincronizar ZAPI
           </Button>
-          <Button variant="outline" onClick={() => handleAddContactsToZApi(contacts)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Adicionar Todos à ZAPI
-          </Button>
         </div>
       </div>
 
