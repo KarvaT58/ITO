@@ -656,6 +656,18 @@ export function ContactsTab() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sem WhatsApp</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalStats.totalContacts - totalStats.withWhatsapp}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bloqueados</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -663,16 +675,6 @@ export function ContactsTab() {
             <div className="text-2xl font-bold">
               {totalStats.blocked}
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Etiquetas</CardTitle>
-            <Tag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tags.length}</div>
           </CardContent>
         </Card>
       </div>
