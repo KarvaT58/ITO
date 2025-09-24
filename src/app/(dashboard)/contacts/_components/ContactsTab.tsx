@@ -48,7 +48,7 @@ interface Contact {
   email?: string
   tags: string[]
   isBlocked: boolean
-  hasWhatsapp: boolean
+  hasWhatsApp: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -223,7 +223,7 @@ export function ContactsTab() {
         
         setTotalStats({
           totalContacts: allContacts.length,
-          withWhatsapp: allContacts.filter(c => c.hasWhatsapp).length,
+          withWhatsapp: allContacts.filter(c => c.hasWhatsApp).length,
           blocked: allContacts.filter(c => c.isBlocked).length
         })
       }
@@ -812,7 +812,7 @@ export function ContactsTab() {
                   </TableCell>
                   <TableCell className="w-32 text-center">
                     <div className="flex items-center gap-2 justify-center">
-                      {contact.hasWhatsapp ? (
+                      {contact.hasWhatsApp ? (
                         <Badge variant="default" className="bg-green-500">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           WhatsApp
@@ -1258,7 +1258,7 @@ export function ContactsTab() {
                 <div>
                   <Label className="text-sm font-medium">Status WhatsApp</Label>
                   <div className="flex items-center gap-1 mt-1">
-                    {selectedContact.hasWhatsapp ? (
+                    {selectedContact.hasWhatsApp ? (
                       <Badge variant="default" className="bg-green-500">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Tem WhatsApp
