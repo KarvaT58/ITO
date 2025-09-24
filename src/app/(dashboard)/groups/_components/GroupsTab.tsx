@@ -171,6 +171,16 @@ export function GroupsTab() {
       return
     }
 
+    // Debug: Log dos dados antes de enviar
+    console.log('🔍 Frontend - Dados antes de enviar:', {
+      groupName: newGroupName,
+      phones: selectedContacts,
+      autoInvite: true,
+      description: newGroupDescription,
+      hasPhoto: !!newGroupPhoto,
+      photoName: newGroupPhoto?.name
+    })
+
     setIsLoading(true)
     try {
       const result = await createGroup({
