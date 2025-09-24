@@ -82,6 +82,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
+  // Se estiver sendo redirecionado do dashboard para login, aguardar um pouco
+  if (req.nextUrl.pathname === '/login' && req.nextUrl.searchParams.get('redirectedFrom') === '/dashboard') {
+    console.log('Redirecionamento do dashboard detectado, aguardando...')
+    // Não fazer nada, deixar o processo de login continuar
+  }
+
   return response
 }
 

@@ -108,6 +108,7 @@ export function LoginForm({
   className,
   ...props
 }: LoginFormProps) {
+  const router = useRouter()
   const { supabase, isClient } = useSupabase()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -162,9 +163,13 @@ export function LoginForm({
         console.log('Login bem-sucedido, redirecionando para dashboard...')
         console.log('Dados do usuário:', data.user)
         
-        // Redirecionamento direto e imediato
-        console.log('Redirecionando diretamente para dashboard...')
-        window.location.href = "/dashboard"
+        // Aguardar a sessão ser persistida antes do redirecionamento
+        console.log('Aguardando persistência da sessão...')
+        setTimeout(() => {
+          console.log('Redirecionando para dashboard...')
+          // Usar router.replace para evitar histórico de navegação
+          router.replace("/dashboard")
+        }, 1000) // Aguardar 1 segundo para a sessão ser persistida
       }
     } catch {
       setError('Erro ao fazer login. Tente novamente.')
