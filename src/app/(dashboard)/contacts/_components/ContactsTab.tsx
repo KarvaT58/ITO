@@ -71,6 +71,12 @@ export function ContactsTab() {
   const [selectedInstance, setSelectedInstance] = useState<ZApiInstance | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTag, setSelectedTag] = useState<string>('all')
+  
+  // Estados para paginação
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalContacts, setTotalContacts] = useState(0)
+  const contactsPerPage = 40
 
   // Estados para modais
   const [isAddContactOpen, setIsAddContactOpen] = useState(false)
@@ -99,6 +105,11 @@ export function ContactsTab() {
     loadTags()
   }, [])
 
+  // Recarregar contatos quando a página mudar
+  useEffect(() => {
+    loadContacts(currentPage)
+  }, [currentPage])
+
   // Simular instância selecionada
   useEffect(() => {
     setSelectedInstance({
@@ -111,9 +122,9 @@ export function ContactsTab() {
     })
   }, [])
 
-  const loadContacts = async () => {
+  const loadContacts = async (page: number = currentPage) => {
     try {
-      const result = await getContacts(searchTerm, selectedTag)
+      const result = await getContacts(searchTerm, selectedTag, page, contactsPerPage)
       
       if (result.success && result.data) {
         setContacts(result.data.map(contact => ({
@@ -121,6 +132,12 @@ export function ContactsTab() {
           createdAt: new Date(contact.created_at),
           updatedAt: new Date(contact.updated_at)
         })))
+        
+        // Atualizar informações de paginação
+        if (result.pagination) {
+          setTotalPages(result.pagination.totalPages)
+          setTotalContacts(result.pagination.total)
+        }
       } else {
         toast.error(result.error || 'Erro ao carregar contatos')
       }
@@ -144,6 +161,25 @@ export function ContactsTab() {
       }
     } catch (error) {
       console.error('Erro ao carregar etiquetas:', error)
+    }
+  }
+
+  // Funções de paginação
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
     }
   }
 
@@ -471,6 +507,66 @@ export function ContactsTab() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Controles de Paginação */}
+      {totalPages > 1 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {((currentPage - 1) * contactsPerPage) + 1} a {Math.min(currentPage * contactsPerPage, totalContacts)} de {totalContacts} contatos
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum
+                    if (totalPages <= 5) {
+                      pageNum = i + 1
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i
+                    } else {
+                      pageNum = currentPage - 2 + i
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  Próximo
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modal Adicionar Contato */}
       <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>

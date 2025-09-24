@@ -181,7 +181,7 @@ export async function createContact(contact: Omit<Contact, 'id' | 'user_id' | 'c
   }
 }
 
-export async function getContacts(searchTerm?: string, tagFilter?: string) {
+export async function getContacts(searchTerm?: string, tagFilter?: string, page: number = 1, pageSize: number = 40) {
   try {
     const supabase = createServerClient()
     
@@ -191,11 +191,17 @@ export async function getContacts(searchTerm?: string, tagFilter?: string) {
     // Se estamos no Vercel, usar um UUID mock válido
     const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
     
+    // Calcular offset para paginação
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    
+    // Query para buscar contatos com paginação
     let query = supabase
       .from('contacts')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+      .range(from, to)
 
     if (searchTerm) {
       query = query.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
@@ -205,11 +211,24 @@ export async function getContacts(searchTerm?: string, tagFilter?: string) {
       query = query.contains('tags', [tagFilter])
     }
 
-    const { data, error } = await query
+    const { data, error, count } = await query
 
     if (error) throw error
 
-    return { success: true, data: data || [] }
+    // Calcular informações de paginação
+    const total = count || 0
+    const totalPages = Math.ceil(total / pageSize)
+
+    return { 
+      success: true, 
+      data: data || [],
+      pagination: {
+        currentPage: page,
+        totalPages,
+        total,
+        pageSize
+      }
+    }
   } catch (error) {
     console.error('Erro ao buscar contatos:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
