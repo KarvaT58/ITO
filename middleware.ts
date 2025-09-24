@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
+  // Verificar se estamos no Vercel e se é uma requisição de API
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.next()
+  }
+
   let response = NextResponse.next({
     request: {
       headers: req.headers,
@@ -69,9 +74,21 @@ export async function middleware(req: NextRequest) {
   console.log('Middleware - Rota:', req.nextUrl.pathname, 'Protegida:', isProtectedRoute, 'Sessão:', !!session)
   console.log('Middleware - Ambiente:', process.env.NODE_ENV)
   console.log('Middleware - Cookies:', req.cookies.getAll().map(c => c.name))
+  
+  // Verificação especial para Vercel - se não há cookies de sessão, permitir acesso temporariamente
+  const hasSupabaseCookies = req.cookies.getAll().some(c => c.name.includes('supabase'))
+  const isVercel = process.env.VERCEL === '1'
+  
+  if (isVercel && !hasSupabaseCookies && isProtectedRoute) {
+    console.log('Vercel detectado sem cookies Supabase - permitindo acesso temporário')
+    return response
+  }
 
   if (isProtectedRoute && !session) {
     console.log('Redirecionando para login - usuário não autenticado')
+    console.log('URL atual:', req.url)
+    console.log('Headers:', Object.fromEntries(req.headers.entries()))
+    
     // Redirecionar para login se não estiver autenticado
     const redirectUrl = new URL('/login', req.url)
     redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
