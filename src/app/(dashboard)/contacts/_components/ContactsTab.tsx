@@ -36,7 +36,8 @@ import {
   syncContactsFromZApi,
   importContactsFromCSV,
   deleteContacts,
-  checkPhoneExists
+  checkPhoneExists,
+  modifyContactBlocked
 } from '@/server/actions/contacts'
 import { listZapiInstances } from '@/server/actions/zapi'
 
@@ -518,6 +519,59 @@ export function ContactsTab() {
     }
   }
 
+  const handleBlockContact = async (contact: Contact) => {
+    try {
+      // Buscar instâncias Z-API disponíveis
+      const instances = await listZapiInstances()
+      
+      if (!instances || instances.length === 0) {
+        toast.error('Nenhuma instância Z-API configurada')
+        return
+      }
+
+      // Usar a primeira instância disponível
+      const instance = instances[0]
+      
+      const action = contact.isBlocked ? 'unblock' : 'block'
+      const actionText = contact.isBlocked ? 'desbloqueando' : 'bloqueando'
+      
+      toast.loading(`${actionText} ${contact.name}...`, { id: 'block-contact' })
+      
+      // Bloquear/desbloquear contato via Z-API
+      const result = await modifyContactBlocked(instance.id, contact.phone, action)
+      
+      if (result.success && result.data) {
+        // Atualizar o contato no banco de dados
+        const updateResult = await updateContact(contact.id, {
+          isBlocked: !contact.isBlocked
+        })
+        
+        if (updateResult.success) {
+          toast.dismiss('block-contact')
+          toast.success(
+            contact.isBlocked 
+              ? `✅ ${contact.name} foi desbloqueado!` 
+              : `✅ ${contact.name} foi bloqueado!`
+          )
+          
+          // Recarregar contatos e estatísticas
+          loadContacts()
+          loadTotalStats()
+        } else {
+          toast.dismiss('block-contact')
+          toast.error('Erro ao atualizar contato no banco')
+        }
+      } else {
+        toast.dismiss('block-contact')
+        toast.error('Erro ao bloquear/desbloquear contato')
+      }
+    } catch (error) {
+      toast.dismiss('block-contact')
+      console.error('Erro ao bloquear/desbloquear contato:', error)
+      toast.error('Erro ao bloquear/desbloquear contato')
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -854,7 +908,7 @@ export function ContactsTab() {
                           <Phone className="h-4 w-4 mr-2" />      
                           Verificar WhatsApp
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
+                        <DropdownMenuItem onClick={() => handleBlockContact(contact)}>
                           <Shield className="h-4 w-4 mr-2" />
                           {contact.isBlocked ? 'Desbloquear' : 'Bloquear'}
                         </DropdownMenuItem>
