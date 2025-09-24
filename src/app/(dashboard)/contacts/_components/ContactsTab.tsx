@@ -684,17 +684,19 @@ export function ContactsTab() {
       
       if (result.success && result.data) {
         console.log('Resposta da Z-API para imagem:', result.data)
-        const imageData = result.data as { link: string }
-        if (imageData && imageData.link) {
+        const imageData = result.data as { link: string, errorMessage?: string }
+        
+        // Verificar se há erro ou link inválido
+        if (imageData.errorMessage || !imageData.link || imageData.link === 'null' || imageData.link === null) {
+          console.log('Contato não possui foto de perfil:', imageData.errorMessage || 'Link inválido')
+          toast.dismiss('get-image')
+          toast.info(`${contact.name} não possui foto de perfil`)
+          setContactImage(null)
+        } else {
           console.log('Link da imagem encontrado:', imageData.link)
           setContactImage(imageData.link)
           toast.dismiss('get-image')
           toast.success(`✅ Imagem de ${contact.name} carregada!`)
-        } else {
-          console.log('Nenhum link de imagem encontrado')
-          toast.dismiss('get-image')
-          toast.info(`${contact.name} não possui foto de perfil`)
-          setContactImage(null)
         }
       } else {
         toast.dismiss('get-image')
