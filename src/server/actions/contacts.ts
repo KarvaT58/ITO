@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 import { Zapi } from '@/lib/zapi/endpoints'
 
 // Tipos
@@ -146,7 +146,7 @@ export async function getContactsFromZApi(instanceId: string, page?: number, pag
 // CRUD de contatos no banco
 export async function createContact(contact: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -171,7 +171,7 @@ export async function createContact(contact: Omit<Contact, 'id' | 'user_id' | 'c
 
 export async function getContacts(searchTerm?: string, tagFilter?: string) {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -206,7 +206,7 @@ export async function getContacts(searchTerm?: string, tagFilter?: string) {
 
 export async function updateContact(id: string, updates: Partial<Contact>) {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     const { data, error } = await supabase
       .from('contacts')
@@ -226,7 +226,7 @@ export async function updateContact(id: string, updates: Partial<Contact>) {
 
 export async function deleteContact(id: string) {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     const { error } = await supabase
       .from('contacts')
@@ -245,7 +245,7 @@ export async function deleteContact(id: string) {
 // CRUD de etiquetas
 export async function createTag(tag: Omit<Tag, 'id' | 'created_at'>) {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     const { data, error } = await supabase
       .from('tags')
@@ -264,7 +264,7 @@ export async function createTag(tag: Omit<Tag, 'id' | 'created_at'>) {
 
 export async function getTags() {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     // Verificar autenticação
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -289,7 +289,7 @@ export async function getTags() {
 
 export async function updateTag(id: string, updates: Partial<Tag>) {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     const { data, error } = await supabase
       .from('tags')
@@ -309,7 +309,7 @@ export async function updateTag(id: string, updates: Partial<Tag>) {
 
 export async function deleteTag(id: string) {
   try {
-    const supabase = createClient()
+    const supabase = createServerClient()
     
     const { error } = await supabase
       .from('tags')
@@ -335,7 +335,7 @@ export async function syncContactsFromZApi(instanceId: string) {
       return { success: false, error: 'Nenhum contato encontrado na ZAPI' }
     }
 
-    const supabase = createClient()
+    const supabase = createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -406,7 +406,7 @@ export async function syncContactsFromZApi(instanceId: string) {
 
 // Função auxiliar para buscar tokens da instância
 async function getInstanceTokens(instanceId: string) {
-  const supabase = createClient()
+  const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
