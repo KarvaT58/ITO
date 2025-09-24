@@ -15,6 +15,76 @@ async function checkAuth(supabase: ReturnType<typeof createServerClient>) {
   return { user, isVercel }
 }
 
+// Função para normalizar números de telefone brasileiros
+function normalizePhoneNumber(phone: string): string {
+  // Remove todos os caracteres não numéricos
+  const cleanPhone = phone.replace(/\D/g, '')
+  
+  // Se começa com 55 (Brasil), processa
+  if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
+    const ddd = cleanPhone.substring(2, 4)
+    const number = cleanPhone.substring(4)
+    
+    // Se tem 9 dígitos no número (13 total), remove o 9 extra
+    if (number.length === 9 && number.startsWith('9')) {
+      return `55${ddd}${number.substring(1)}` // Remove o 9
+    }
+    // Se tem 8 dígitos no número (12 total), adiciona o 9
+    else if (number.length === 8) {
+      return `55${ddd}9${number}` // Adiciona o 9
+    }
+  }
+  
+  return cleanPhone
+}
+
+// Função para gerar variações de um número para verificação
+function getPhoneVariations(phone: string): string[] {
+  const normalized = normalizePhoneNumber(phone)
+  const variations = [normalized]
+  
+  // Se o número normalizado tem 12 dígitos, cria versão com 9
+  if (normalized.length === 12 && normalized.startsWith('55')) {
+    const ddd = normalized.substring(2, 4)
+    const number = normalized.substring(4)
+    if (number.length === 8) {
+      variations.push(`55${ddd}9${number}`)
+    }
+  }
+  
+  // Se o número normalizado tem 13 dígitos, cria versão sem 9
+  if (normalized.length === 13 && normalized.startsWith('55')) {
+    const ddd = normalized.substring(2, 4)
+    const number = normalized.substring(4)
+    if (number.length === 9 && number.startsWith('9')) {
+      variations.push(`55${ddd}${number.substring(1)}`)
+    }
+  }
+  
+  return variations
+}
+
+// Função para verificar se contato já existe
+async function checkContactExists(phone: string, userId: string): Promise<{ exists: boolean; existingContact?: unknown }> {
+  const supabase = createServerClient()
+  const variations = getPhoneVariations(phone)
+  
+  for (const variation of variations) {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('phone', variation)
+      .single()
+    
+    if (data && !error) {
+      return { exists: true, existingContact: data }
+    }
+  }
+  
+  return { exists: false }
+}
+
 // Tipos
 interface Contact {
   id: string
@@ -166,9 +236,24 @@ export async function createContact(contact: Omit<Contact, 'id' | 'user_id' | 'c
     // Se estamos no Vercel, usar um UUID mock válido
     const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
     
+    // Verificar se contato já existe
+    const { exists, existingContact } = await checkContactExists(contact.phone, userId)
+    
+    if (exists) {
+      return { 
+        success: false, 
+        error: 'Contato já existe',
+        duplicate: true,
+        existingContact: existingContact
+      }
+    }
+    
+    // Normalizar número de telefone
+    const normalizedPhone = normalizePhoneNumber(contact.phone)
+    
     const { data, error } = await supabase
       .from('contacts')
-      .insert([{ ...contact, user_id: userId }])
+      .insert([{ ...contact, phone: normalizedPhone, user_id: userId }])
       .select()
       .single()
 
@@ -317,6 +402,97 @@ export async function getTags() {
     return { success: true, data: data || [] }
   } catch (error) {
     console.error('Erro ao buscar etiquetas:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Função para importar contatos CSV com verificação de duplicatas
+export async function importContactsFromCSV(contacts: Array<{
+  name: string
+  phone: string
+  email?: string
+  tag?: string
+}>) {
+  try {
+    const supabase = createServerClient()
+    
+    // Verificar autenticação
+    const { user, isVercel } = await checkAuth(supabase)
+    
+    // Se estamos no Vercel, usar um UUID mock válido
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
+    
+    const validContacts = []
+    const duplicates = []
+    const errors = []
+    
+    // Processar cada contato
+    for (const contact of contacts) {
+      try {
+        // Verificar se contato já existe
+        const { exists, existingContact } = await checkContactExists(contact.phone, userId)
+        
+        if (exists) {
+          duplicates.push({
+            contact,
+            existingContact,
+            reason: 'Contato já existe'
+          })
+          continue
+        }
+        
+        // Normalizar número de telefone
+        const normalizedPhone = normalizePhoneNumber(contact.phone)
+        
+        // Preparar dados do contato
+        const contactData = {
+          name: contact.name,
+          phone: normalizedPhone,
+          email: contact.email || null,
+          tags: contact.tag ? [contact.tag] : [],
+          has_whatsapp: true,
+          user_id: userId
+        }
+        
+        validContacts.push(contactData)
+        
+      } catch (error) {
+        errors.push({
+          contact,
+          error: error instanceof Error ? error.message : 'Erro desconhecido'
+        })
+      }
+    }
+    
+    // Inserir contatos válidos em lote
+    let insertedContacts = []
+    if (validContacts.length > 0) {
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert(validContacts)
+        .select()
+      
+      if (error) throw error
+      insertedContacts = data || []
+    }
+    
+    return {
+      success: true,
+      data: {
+        imported: insertedContacts.length,
+        duplicates: duplicates.length,
+        errors: errors.length,
+        total: contacts.length,
+        details: {
+          inserted: insertedContacts,
+          duplicates,
+          errors
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error('Erro ao importar contatos:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
   }
 }

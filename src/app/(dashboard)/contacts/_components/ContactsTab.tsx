@@ -32,7 +32,8 @@ import {
   getContacts,
   getTags,
   createTag,
-  syncContactsFromZApi
+  syncContactsFromZApi,
+  importContactsFromCSV
 } from '@/server/actions/contacts'
 
 // Tipos
@@ -262,7 +263,12 @@ export function ContactsTab() {
         setIsAddContactOpen(false)
         loadContacts()
       } else {
-        toast.error(result.error || 'Erro ao adicionar contato')
+        if (result.duplicate) {
+          const existing = result.existingContact as { name?: string; phone?: string }
+          toast.error(`Contato já existe: ${existing?.name || 'Nome não disponível'} (${existing?.phone || 'Telefone não disponível'})`)
+        } else {
+          toast.error(result.error || 'Erro ao adicionar contato')
+        }
       }
     } catch (error) {
       console.error('Erro ao adicionar contato:', error)
@@ -296,7 +302,7 @@ export function ContactsTab() {
     }
   }
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -305,8 +311,64 @@ export function ContactsTab() {
       return
     }
 
-    // Aqui você implementaria a lógica de importação CSV
-    toast.info('Funcionalidade de importação CSV em desenvolvimento')
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').filter(line => line.trim())
+      
+      if (lines.length < 2) {
+        toast.error('Arquivo CSV deve ter pelo menos um cabeçalho e uma linha de dados')
+        return
+      }
+
+      // Parse CSV
+      const contacts = []
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim())
+        
+        if (values.length >= 2) { // Nome e telefone são obrigatórios
+          const contact = {
+            name: values[0] || '',
+            phone: values[1] || '',
+            email: values[2] || undefined,
+            tag: values[3] || undefined
+          }
+          
+          if (contact.name && contact.phone) {
+            contacts.push(contact)
+          }
+        }
+      }
+
+      if (contacts.length === 0) {
+        toast.error('Nenhum contato válido encontrado no arquivo')
+        return
+      }
+
+      // Importar contatos com verificação de duplicatas
+      const result = await importContactsFromCSV(contacts)
+
+      if (result.success && result.data) {
+        const { imported, duplicates, errors } = result.data
+        
+        toast.success(
+          `Importação concluída! ${imported} contatos importados, ${duplicates} duplicados removidos, ${errors} erros`
+        )
+        
+        // Mostrar detalhes se houver duplicatas ou erros
+        if (duplicates > 0 || errors > 0) {
+          console.log('Detalhes da importação:', result.data.details)
+        }
+        
+        setIsImportOpen(false)
+        loadContacts()
+      } else {
+        toast.error(result.error || 'Erro ao importar contatos')
+      }
+    } catch (error) {
+      console.error('Erro ao processar arquivo CSV:', error)
+      toast.error('Erro ao processar arquivo CSV')
+    }
   }
 
   return (
