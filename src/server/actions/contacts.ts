@@ -163,8 +163,8 @@ export async function createContact(contact: Omit<Contact, 'id' | 'user_id' | 'c
     // Verificar autenticação
     const { user, isVercel } = await checkAuth(supabase)
     
-    // Se estamos no Vercel, usar um user_id mock
-    const userId = isVercel ? 'vercel-user' : user?.id || 'default-user'
+    // Se estamos no Vercel, usar um UUID mock válido
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
     
     const { data, error } = await supabase
       .from('contacts')
@@ -188,8 +188,8 @@ export async function getContacts(searchTerm?: string, tagFilter?: string) {
     // Verificar autenticação
     const { user, isVercel } = await checkAuth(supabase)
     
-    // Se estamos no Vercel, usar um user_id mock
-    const userId = isVercel ? 'vercel-user' : user?.id || 'default-user'
+    // Se estamos no Vercel, usar um UUID mock válido
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
     
     let query = supabase
       .from('contacts')
@@ -284,8 +284,8 @@ export async function getTags() {
     // Verificar autenticação
     const { user, isVercel } = await checkAuth(supabase)
     
-    // Se estamos no Vercel, usar um user_id mock
-    const userId = isVercel ? 'vercel-user' : user?.id || 'default-user'
+    // Se estamos no Vercel, usar um UUID mock válido
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
     
     const { data, error } = await supabase
       .from('tags')
@@ -434,17 +434,18 @@ async function getInstanceTokens(instanceId: string) {
   // Se estamos no Vercel, pular verificação de usuário
   if (isVercel) {
     console.log('Vercel: Pulando verificação de usuário para Server Actions')
-    // Buscar instância sem verificar usuário
-    const { data: instance, error: instanceError } = await supabase
+    // Buscar primeira instância disponível
+    const { data: instances, error: instanceError } = await supabase
       .from('zapi_instances')
       .select('instance_id, instance_token, client_security_token')
-      .eq('id', instanceId)
-      .single()
+      .eq('is_active', true)
+      .limit(1)
 
-    if (instanceError || !instance) {
-      throw new Error('Instância não encontrada')
+    if (instanceError || !instances || instances.length === 0) {
+      throw new Error('Nenhuma instância ZAPI ativa encontrada')
     }
 
+    const instance = instances[0]
     return {
       instanceId: instance.instance_id,
       instanceToken: instance.instance_token,
