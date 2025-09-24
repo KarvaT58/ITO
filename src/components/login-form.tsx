@@ -108,7 +108,6 @@ export function LoginForm({
   className,
   ...props
 }: LoginFormProps) {
-  const router = useRouter()
   const { supabase, isClient } = useSupabase()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -163,30 +162,9 @@ export function LoginForm({
         console.log('Login bem-sucedido, redirecionando para dashboard...')
         console.log('Dados do usuário:', data.user)
         
-        // Aguardar um pouco para garantir que a sessão seja persistida
-        setTimeout(async () => {
-          try {
-            console.log('Tentando redirecionamento...')
-            
-            // Tentar router.push primeiro
-            await router.push("/dashboard")
-            console.log('Redirecionamento via router.push executado')
-            
-            // Verificar se realmente redirecionou após um tempo
-            setTimeout(() => {
-              if (window.location.pathname !== '/dashboard') {
-                console.log('Router.push não funcionou, usando fallback')
-                window.location.href = "/dashboard"
-              }
-            }, 500)
-            
-          } catch (routerError) {
-            console.error('Erro no router.push:', routerError)
-            // Fallback: redirecionamento direto
-            console.log('Usando fallback window.location.href')
-            window.location.href = "/dashboard"
-          }
-        }, 100)
+        // Redirecionamento direto e imediato
+        console.log('Redirecionando diretamente para dashboard...')
+        window.location.href = "/dashboard"
       }
     } catch {
       setError('Erro ao fazer login. Tente novamente.')
