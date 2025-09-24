@@ -82,7 +82,6 @@ export function ContactsTab() {
 
   // Estados para seleção múltipla
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
-  const [isSelecting, setIsSelecting] = useState(false)
 
 
   // Estados para modais
@@ -439,7 +438,6 @@ export function ContactsTab() {
       if (result.success) {
         toast.success(`${result.deletedCount} contato(s) deletado(s) com sucesso`)
         clearSelection()
-        setIsSelecting(false)
         loadContacts(currentPage) // Recarregar a página atual
       } else {
         toast.error(result.error || 'Erro ao deletar contatos')
@@ -488,43 +486,26 @@ export function ContactsTab() {
         </div>
         
         <div className="flex items-center gap-2">
-          {!isSelecting ? (
-            <>
-              <Button variant="outline" onClick={handleSyncFromZApi}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Sincronizar ZAPI
-              </Button>
-              <Button variant="outline" onClick={() => handleAddContactsToZApi(contacts)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Adicionar Todos à ZAPI
-              </Button>
-              <Button variant="outline" onClick={() => setIsSelecting(true)}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Selecionar Contatos
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={selectAllContacts}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Selecionar Todos
-              </Button>
-              <Button variant="outline" onClick={clearSelection}>
-                <XCircle className="h-4 w-4 mr-2" />
-                Limpar Seleção
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteSelected} disabled={selectedContacts.length === 0}>
-                <XCircle className="h-4 w-4 mr-2" />
-                Apagar Selecionados ({selectedContacts.length})
-              </Button>
-              <Button variant="outline" onClick={() => {
-                setIsSelecting(false)
-                clearSelection()
-              }}>
-                Cancelar
-              </Button>
-            </>
-          )}
+          <Button variant="outline" onClick={handleSyncFromZApi}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Sincronizar ZAPI
+          </Button>
+          <Button variant="outline" onClick={() => handleAddContactsToZApi(contacts)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar Todos à ZAPI
+          </Button>
+          <Button variant="outline" onClick={selectAllContacts}>
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Selecionar Todos
+          </Button>
+          <Button variant="outline" onClick={clearSelection}>
+            <XCircle className="h-4 w-4 mr-2" />
+            Limpar Seleção
+          </Button>
+          <Button variant="destructive" onClick={handleDeleteSelected} disabled={selectedContacts.length === 0}>
+            <XCircle className="h-4 w-4 mr-2" />
+            Apagar Selecionados ({selectedContacts.length})
+          </Button>
         </div>
       </div>
 
@@ -615,42 +596,38 @@ export function ContactsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                {isSelecting && (
-                  <TableHead className="w-12">
-                    <input
-                      type="checkbox"
-                      checked={selectedContacts.length === contacts.length && contacts.length > 0}
-                      onChange={selectAllContacts}
-                      className="rounded"
-                    />
-                  </TableHead>
-                )}
-                <TableHead className="w-48">Nome</TableHead>
-                <TableHead className="w-32">Telefone</TableHead>
-                <TableHead className="w-32">Email</TableHead>
-                <TableHead className="w-32">Etiquetas</TableHead>
-                <TableHead className="w-32">Status</TableHead>
-                <TableHead className="w-20 text-right">Ações</TableHead>
+                <TableHead className="w-12 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedContacts.length === contacts.length && contacts.length > 0}
+                    onChange={selectAllContacts}
+                    className="rounded"
+                  />
+                </TableHead>
+                <TableHead className="w-48 text-center">Nome</TableHead>
+                <TableHead className="w-40 text-center">Telefone</TableHead>
+                <TableHead className="w-48 text-center">Email</TableHead>
+                <TableHead className="w-32 text-center">Etiquetas</TableHead>
+                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20 text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {contacts.map((contact) => (
                 <TableRow key={contact.id}>
-                  {isSelecting && (
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selectedContacts.includes(contact.id)}
-                        onChange={() => toggleContactSelection(contact.id)}
-                        className="rounded"
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell className="font-medium w-48">{contact.name}</TableCell>
-                  <TableCell className="w-32">{contact.phone}</TableCell>
-                  <TableCell className="w-32">{contact.email || '-'}</TableCell>
-                  <TableCell className="w-32">
-                    <div className="flex flex-wrap gap-1">
+                  <TableCell className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedContacts.includes(contact.id)}
+                      onChange={() => toggleContactSelection(contact.id)}
+                      className="rounded"
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium w-48 text-center">{contact.name}</TableCell>
+                  <TableCell className="w-40 text-center">{contact.phone}</TableCell>
+                  <TableCell className="w-48 text-center">{contact.email || '-'}</TableCell>
+                  <TableCell className="w-32 text-center">
+                    <div className="flex flex-wrap gap-1 justify-center">
                       {contact.tags.map((tag, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {tag}
@@ -658,8 +635,8 @@ export function ContactsTab() {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="w-32">
-                    <div className="flex items-center gap-2">
+                  <TableCell className="w-32 text-center">
+                    <div className="flex items-center gap-2 justify-center">
                       {contact.hasWhatsapp ? (
                         <Badge variant="default" className="bg-green-500">
                           <CheckCircle className="h-3 w-3 mr-1" />
@@ -679,7 +656,7 @@ export function ContactsTab() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right w-20">
+                  <TableCell className="text-center w-20">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
