@@ -111,6 +111,16 @@ export function ContactsTab() {
     loadContacts(currentPage)
   }, [currentPage])
 
+  // Recarregar contatos quando busca ou filtro mudar (com debounce)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setCurrentPage(1) // Reset para primeira página
+      loadContacts(1)
+    }, 300) // Debounce de 300ms
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, selectedTag])
+
   // Simular instância selecionada
   useEffect(() => {
     setSelectedInstance({
@@ -320,18 +330,38 @@ export function ContactsTab() {
         return
       }
 
-      // Parse CSV
+      // Parse CSV mais robusto
       const contacts = []
 
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim())
+        const line = lines[i].trim()
+        if (!line) continue
+
+        // Parse CSV considerando aspas e vírgulas dentro dos campos
+        const values = []
+        let current = ''
+        let inQuotes = false
+        
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j]
+          
+          if (char === '"') {
+            inQuotes = !inQuotes
+          } else if (char === ',' && !inQuotes) {
+            values.push(current.trim())
+            current = ''
+          } else {
+            current += char
+          }
+        }
+        values.push(current.trim())
         
         if (values.length >= 2) { // Nome e telefone são obrigatórios
           const contact = {
-            name: values[0] || '',
-            phone: values[1] || '',
-            email: values[2] || undefined,
-            tag: values[3] || undefined
+            name: values[0]?.replace(/"/g, '') || '',
+            phone: values[1]?.replace(/"/g, '') || '',
+            email: values[2]?.replace(/"/g, '') || undefined,
+            tag: values[3]?.replace(/"/g, '') || undefined
           }
           
           if (contact.name && contact.phone) {
@@ -344,6 +374,9 @@ export function ContactsTab() {
         toast.error('Nenhum contato válido encontrado no arquivo')
         return
       }
+
+      console.log('Contatos processados do CSV:', contacts)
+      toast.info(`Processando ${contacts.length} contatos...`)
 
       // Importar contatos com verificação de duplicatas
       const result = await importContactsFromCSV(contacts)
@@ -721,6 +754,23 @@ export function ContactsTab() {
               <p><strong>Formato esperado:</strong></p>
               <p>Nome, Telefone, Email, Etiqueta</p>
               <p className="text-xs mt-1">Exemplo: João Silva, 5511999999999, joao@email.com, Cliente</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => {
+                  const csvContent = "Nome,Telefone,Email,Etiqueta\nJoão Silva,5511999999999,joao@email.com,Cliente\nMaria Santos,5511888888888,maria@email.com,Fornecedor\nPedro Costa,5511777777777,pedro@email.com,Amigo"
+                  const blob = new Blob([csvContent], { type: 'text/csv' })
+                  const url = window.URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = 'template-contatos.csv'
+                  a.click()
+                  window.URL.revokeObjectURL(url)
+                }}
+              >
+                Baixar Template CSV
+              </Button>
             </div>
           </div>
           <DialogFooter>
