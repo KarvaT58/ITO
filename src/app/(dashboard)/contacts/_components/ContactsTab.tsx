@@ -81,6 +81,13 @@ export function ContactsTab() {
   const [totalContacts, setTotalContacts] = useState(0)
   const contactsPerPage = 40
 
+  // Estados para estatísticas totais
+  const [totalStats, setTotalStats] = useState({
+    totalContacts: 0,
+    withWhatsapp: 0,
+    blocked: 0
+  })
+
   // Estados para seleção múltipla
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
 
@@ -111,6 +118,7 @@ export function ContactsTab() {
   useEffect(() => {
     loadContacts()
     loadTags()
+    loadTotalStats()
   }, [])
 
   // Recarregar contatos quando a página mudar
@@ -179,6 +187,29 @@ export function ContactsTab() {
       }
     } catch (error) {
       console.error('Erro ao carregar etiquetas:', error)
+    }
+  }
+
+  const loadTotalStats = async () => {
+    try {
+      // Carregar todos os contatos para estatísticas (sem paginação)
+      const result = await getContacts('', 'all', 1, 10000) // Número grande para pegar todos
+      
+      if (result.success && result.data) {
+        const allContacts = result.data.map(contact => ({
+          ...contact,
+          createdAt: new Date(contact.created_at),
+          updatedAt: new Date(contact.updated_at)
+        }))
+        
+        setTotalStats({
+          totalContacts: allContacts.length,
+          withWhatsapp: allContacts.filter(c => c.hasWhatsapp).length,
+          blocked: allContacts.filter(c => c.isBlocked).length
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas totais:', error)
     }
   }
 
@@ -532,12 +563,12 @@ export function ContactsTab() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Label htmlFor="tag-filter">Etiqueta:</Label>
+          <Label htmlFor="tag-filter" className="text-sm font-medium">Etiqueta:</Label>
           <select
             id="tag-filter"
             value={selectedTag}
             onChange={(e) => setSelectedTag(e.target.value)}
-            className="px-3 py-2 border rounded-md bg-background"
+            className="px-4 py-2 border rounded-md bg-background min-w-[120px] text-sm"
           >
             <option value="all">Todas</option>
             {tags.map(tag => (
@@ -555,7 +586,7 @@ export function ContactsTab() {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{contacts.length}</div>
+            <div className="text-2xl font-bold">{totalStats.totalContacts}</div>
           </CardContent>
         </Card>
         
@@ -566,7 +597,7 @@ export function ContactsTab() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {contacts.filter(c => c.hasWhatsapp).length}
+              {totalStats.withWhatsapp}
             </div>
           </CardContent>
         </Card>
@@ -578,7 +609,7 @@ export function ContactsTab() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {contacts.filter(c => c.isBlocked).length}
+              {totalStats.blocked}
             </div>
           </CardContent>
         </Card>
