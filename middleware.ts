@@ -67,6 +67,8 @@ export async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => req.nextUrl.pathname.startsWith(route))
   
   console.log('Middleware - Rota:', req.nextUrl.pathname, 'Protegida:', isProtectedRoute, 'Sessão:', !!session)
+  console.log('Middleware - Ambiente:', process.env.NODE_ENV)
+  console.log('Middleware - Cookies:', req.cookies.getAll().map(c => c.name))
 
   if (isProtectedRoute && !session) {
     console.log('Redirecionando para login - usuário não autenticado')

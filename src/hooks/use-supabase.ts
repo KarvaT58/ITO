@@ -37,9 +37,9 @@ export const useSupabase = () => {
         // Carregar Supabase apenas no cliente
         const { createClient } = await import('@supabase/supabase-js')
         
-        // Usar valores hardcoded para garantir funcionamento
-        const supabaseUrl = 'https://umdzvfpnsfkmswaejavr.supabase.co'
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZHp2ZnBuc2ZrbXN3YWVqYXZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5ODY1OTgsImV4cCI6MjA3MzU2MjU5OH0.4jJ2RHRaC32ewUdfCFlUkm0NHLsOFNcLzgkwHikPQUo'
+        // Usar variáveis de ambiente ou valores hardcoded como fallback
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://umdzvfpnsfkmswaejavr.supabase.co'
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZHp2ZnBuc2ZrbXN3YWVqYXZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5ODY1OTgsImV4cCI6MjA3MzU2MjU5OH0.4jJ2RHRaC32ewUdfCFlUkm0NHLsOFNcLzgkwHikPQUo'
         
         console.log('Carregando Supabase com URL:', supabaseUrl)
         console.log('Chave anônima:', supabaseAnonKey.substring(0, 20) + '...')
