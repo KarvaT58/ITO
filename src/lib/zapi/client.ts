@@ -10,6 +10,10 @@ export async function zapiFetch<T>(args: {
   query?: Record<string, string>;
 }): Promise<T> {
   const { instanceId, instanceToken, clientSecurityToken, path, method = 'GET', body, query } = args;
+  
+  // Debug logs
+  console.log('🔍 Z-API Debug:', { instanceId, instanceToken: instanceToken?.substring(0, 10) + '...', clientSecurityToken: clientSecurityToken?.substring(0, 10) + '...', path });
+  
   let url = `https://api.z-api.io/instances/${instanceId}/token/${instanceToken}${path}`;
   
   if (query) {

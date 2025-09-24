@@ -181,7 +181,16 @@ export async function removeContactsFromZApi(instanceId: string, phones: string[
 export async function checkPhoneExists(instanceId: string, phone: string) {
   try {
     const tokens = await getInstanceTokens(instanceId)
-    console.log(`🔍 Verificando WhatsApp para ${phone} com tokens:`, { instanceId, hasToken: !!tokens })
+    console.log(`🔍 Verificando WhatsApp para ${phone} com tokens:`, { 
+      instanceId: tokens?.instanceId, 
+      hasToken: !!tokens,
+      phone 
+    })
+    
+    if (!tokens) {
+      throw new Error('Tokens não encontrados')
+    }
+    
     const result = await Zapi.checkPhoneExists(tokens, phone)
     console.log(`📱 Resposta Z-API para ${phone}:`, result)
     return { success: true, data: result }
@@ -967,7 +976,7 @@ async function getInstanceTokens(instanceId: string) {
       if (instance && !instanceError) {
         console.log('Vercel: Instância encontrada por ID específico')
         return {
-          instanceId: instance.instance_id,
+          instanceId: instance.instance_id, // Este é o instance_id real da Z-API
           instanceToken: instance.instance_token,
           clientSecurityToken: instance.client_security_token
         }
