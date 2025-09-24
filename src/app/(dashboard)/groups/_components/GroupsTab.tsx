@@ -52,8 +52,12 @@ export function GroupsTab() {
 
   // Estados para criação de grupo
   const [newGroupName, setNewGroupName] = useState("")
-  const [newGroupPhones, setNewGroupPhones] = useState("")
-  const [autoInvite, setAutoInvite] = useState(true)
+  const [newGroupDescription, setNewGroupDescription] = useState("")
+  const [newGroupPhoto, setNewGroupPhoto] = useState<File | null>(null)
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([])
+  const [contactSearch, setContactSearch] = useState("")
+  const [showContactList, setShowContactList] = useState(false)
+  const [allContacts, setAllContacts] = useState<{id: string; name: string; phone: string}[]>([])
 
   // Estados para configurações
   const [groupSettings, setGroupSettings] = useState<GroupSettingsType>({
@@ -63,10 +67,29 @@ export function GroupsTab() {
     adminOnlyAddMember: false
   })
 
-  // Carregar grupos
+  // Carregar grupos e contatos
   useEffect(() => {
     loadGroups()
+    loadContacts()
   }, [])
+
+  // Carregar contatos
+  const loadContacts = async () => {
+    try {
+      // Aqui você pode implementar a chamada para carregar contatos
+      // Por enquanto, vou simular dados
+      const mockContacts = [
+        { id: "1", name: "João Silva", phone: "5511999999999" },
+        { id: "2", name: "Maria Santos", phone: "5511888888888" },
+        { id: "3", name: "Pedro Costa", phone: "5511777777777" },
+        { id: "4", name: "Ana Oliveira", phone: "5511666666666" },
+        { id: "5", name: "Carlos Lima", phone: "5511555555555" }
+      ]
+      setAllContacts(mockContacts)
+    } catch (error) {
+      console.error("Erro ao carregar contatos:", error)
+    }
+  }
 
   const loadGroups = async () => {
     setIsLoading(true)
@@ -123,19 +146,22 @@ export function GroupsTab() {
   }
 
   const handleCreateGroup = async () => {
-    if (!newGroupName.trim() || !newGroupPhones.trim()) {
-      alert("Nome do grupo e pelo menos um telefone são obrigatórios")
+    if (!newGroupName.trim()) {
+      alert("Nome do grupo é obrigatório")
+      return
+    }
+
+    if (selectedContacts.length === 0) {
+      alert("Pelo menos um participante é obrigatório")
       return
     }
 
     setIsLoading(true)
     try {
-      const phones = newGroupPhones.split(",").map(phone => phone.trim()).filter(Boolean)
-      
       const result = await createGroup({
         groupName: newGroupName,
-        phones,
-        autoInvite
+        phones: selectedContacts,
+        autoInvite: true
       })
 
       if (result.success) {
@@ -144,7 +170,8 @@ export function GroupsTab() {
           name: newGroupName,
           phone: (result.data as { phone: string; invitationLink: string }).phone,
           invitationLink: (result.data as { phone: string; invitationLink: string }).invitationLink,
-          participants: phones.map(phone => ({
+          description: newGroupDescription,
+          participants: selectedContacts.map(phone => ({
             phone,
             isAdmin: false,
             joinedAt: new Date().toISOString()
@@ -161,7 +188,11 @@ export function GroupsTab() {
 
         setGroups(prev => [newGroup, ...prev])
         setNewGroupName("")
-        setNewGroupPhones("")
+        setNewGroupDescription("")
+        setNewGroupPhoto(null)
+        setSelectedContacts([])
+        setContactSearch("")
+        setShowContactList(false)
         setIsCreateDialogOpen(false)
         
         alert(result.message)
@@ -173,6 +204,27 @@ export function GroupsTab() {
       alert("Erro ao criar grupo")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Funções para gerenciar contatos
+  const filteredContacts = allContacts.filter(contact => 
+    contact.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+    contact.phone.includes(contactSearch)
+  )
+
+  const handleContactToggle = (contactId: string, phone: string) => {
+    setSelectedContacts(prev => 
+      prev.includes(phone) 
+        ? prev.filter(p => p !== phone)
+        : [...prev, phone]
+    )
+  }
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setNewGroupPhoto(file)
     }
   }
 
@@ -380,14 +432,15 @@ export function GroupsTab() {
                   Criar Grupo
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Criar Novo Grupo</DialogTitle>
                   <DialogDescription>
                     Crie um novo grupo no WhatsApp com os participantes desejados.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-6 py-4">
+                  {/* Nome do Grupo */}
                   <div className="grid gap-2">
                     <Label htmlFor="groupName">Nome do Grupo</Label>
                     <Input
@@ -397,26 +450,179 @@ export function GroupsTab() {
                       placeholder="Digite o nome do grupo"
                     />
                   </div>
+
+                  {/* Descrição do Grupo */}
                   <div className="grid gap-2">
-                    <Label htmlFor="groupPhones">Telefones dos Participantes</Label>
+                    <Label htmlFor="groupDescription">Descrição do Grupo</Label>
                     <Textarea
-                      id="groupPhones"
-                      value={newGroupPhones}
-                      onChange={(e) => setNewGroupPhones(e.target.value)}
-                      placeholder="Digite os telefones separados por vírgula (ex: 5511999999999, 5511888888888)"
+                      id="groupDescription"
+                      value={newGroupDescription}
+                      onChange={(e) => setNewGroupDescription(e.target.value)}
+                      placeholder="Digite uma descrição para o grupo"
                       rows={3}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Separe os telefones por vírgula. Pelo menos um participante é obrigatório.
-                    </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="autoInvite"
-                      checked={autoInvite}
-                      onCheckedChange={setAutoInvite}
-                    />
-                    <Label htmlFor="autoInvite">Enviar convite automático</Label>
+
+                  {/* Upload de Foto */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="groupPhoto">Foto do Grupo</Label>
+                    <div className="flex items-center space-x-4">
+                      <Input
+                        id="groupPhoto"
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="flex-1"
+                      />
+                      {newGroupPhoto && (
+                        <div className="text-sm text-green-600">
+                          ✓ Foto selecionada
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Seleção de Contatos */}
+                  <div className="grid gap-2">
+                    <Label>Participantes do Grupo</Label>
+                    <div className="space-y-3">
+                      {/* Botão para mostrar/esconder lista de contatos */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowContactList(!showContactList)}
+                        className="w-full"
+                      >
+                        {showContactList ? "Ocultar Contatos" : "Selecionar Contatos"}
+                      </Button>
+
+                      {/* Lista de contatos selecionados */}
+                      {selectedContacts.length > 0 && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Contatos Selecionados ({selectedContacts.length})</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedContacts.map(phone => {
+                              const contact = allContacts.find(c => c.phone === phone)
+                              return (
+                                <Badge key={phone} variant="secondary" className="flex items-center gap-1">
+                                  {contact?.name || phone}
+                                  <button
+                                    onClick={() => handleContactToggle(contact?.id || "", phone)}
+                                    className="ml-1 hover:text-red-500"
+                                  >
+                                    ×
+                                  </button>
+                                </Badge>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lista de contatos */}
+                      {showContactList && (
+                        <div className="space-y-3 border rounded-lg p-4 max-h-60 overflow-y-auto">
+                          <div className="space-y-2">
+                            <Label htmlFor="contactSearch">Pesquisar Contatos</Label>
+                            <Input
+                              id="contactSearch"
+                              value={contactSearch}
+                              onChange={(e) => setContactSearch(e.target.value)}
+                              placeholder="Digite nome ou telefone para pesquisar"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {filteredContacts.map((contact) => (
+                              <div
+                                key={contact.id}
+                                className={`flex items-center space-x-3 p-2 rounded border cursor-pointer hover:bg-gray-50 ${
+                                  selectedContacts.includes(contact.phone) ? 'bg-blue-50 border-blue-200' : ''
+                                }`}
+                                onClick={() => handleContactToggle(contact.id, contact.phone)}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedContacts.includes(contact.phone)}
+                                  onChange={() => handleContactToggle(contact.id, contact.phone)}
+                                  className="rounded"
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{contact.name}</div>
+                                  <div className="text-sm text-gray-500">{contact.phone}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Configurações do Grupo */}
+                  <div className="space-y-4 border-t pt-4">
+                    <Label className="text-base font-semibold">Configurações do Grupo</Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Apenas admins podem enviar mensagens</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Restringe o envio de mensagens apenas aos administradores
+                          </p>
+                        </div>
+                        <Switch
+                          checked={groupSettings.adminOnlyMessage}
+                          onCheckedChange={(checked) => 
+                            setGroupSettings(prev => ({ ...prev, adminOnlyMessage: checked }))
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Apenas admins podem alterar configurações</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Restringe alterações de configurações aos administradores
+                          </p>
+                        </div>
+                        <Switch
+                          checked={groupSettings.adminOnlySettings}
+                          onCheckedChange={(checked) => 
+                            setGroupSettings(prev => ({ ...prev, adminOnlySettings: checked }))
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Requer aprovação de admin para novos membros</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Novos membros precisam ser aprovados por um administrador
+                          </p>
+                        </div>
+                        <Switch
+                          checked={groupSettings.requireAdminApproval}
+                          onCheckedChange={(checked) => 
+                            setGroupSettings(prev => ({ ...prev, requireAdminApproval: checked }))
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Apenas admins podem adicionar membros</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Restringe a adição de novos membros aos administradores
+                          </p>
+                        </div>
+                        <Switch
+                          checked={groupSettings.adminOnlyAddMember}
+                          onCheckedChange={(checked) => 
+                            setGroupSettings(prev => ({ ...prev, adminOnlyAddMember: checked }))
+                          }
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>
