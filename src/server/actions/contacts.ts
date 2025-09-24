@@ -31,14 +31,8 @@ interface Tag {
 // Adicionar contatos à ZAPI
 export async function addContactsToZApi(instanceId: string, contacts: Array<{firstName: string, lastName?: string, phone: string}>) {
   try {
-      const result = await Zapi.addContacts(
-        { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-        contacts
-      )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.addContacts(tokens, contacts)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao adicionar contatos à ZAPI:', error)
@@ -49,14 +43,8 @@ export async function addContactsToZApi(instanceId: string, contacts: Array<{fir
 // Remover contatos da ZAPI
 export async function removeContactsFromZApi(instanceId: string, phones: string[]) {
   try {
-      const result = await Zapi.removeContacts(
-        { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-        phones
-      )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.removeContacts(tokens, phones)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao remover contatos da ZAPI:', error)
@@ -67,14 +55,8 @@ export async function removeContactsFromZApi(instanceId: string, phones: string[
 // Verificar se número tem WhatsApp
 export async function checkPhoneExists(instanceId: string, phone: string) {
   try {
-      const result = await Zapi.checkPhoneExists(
-        { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-        phone
-      )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.checkPhoneExists(tokens, phone)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao verificar número:', error)
@@ -85,14 +67,8 @@ export async function checkPhoneExists(instanceId: string, phone: string) {
 // Verificar números em lote
 export async function checkPhoneExistsBatch(instanceId: string, phones: string[]) {
   try {
-    const result = await Zapi.checkPhoneExistsBatch(
-      { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-      phones
-    )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.checkPhoneExistsBatch(tokens, phones)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao verificar números em lote:', error)
@@ -103,15 +79,8 @@ export async function checkPhoneExistsBatch(instanceId: string, phones: string[]
 // Bloquear/desbloquear contato
 export async function modifyContactBlocked(instanceId: string, phone: string, action: 'block' | 'unblock') {
   try {
-    const result = await Zapi.modifyContactBlocked(
-      { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-      phone,
-      action
-    )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.modifyContactBlocked(tokens, phone, action)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao modificar bloqueio do contato:', error)
@@ -122,14 +91,8 @@ export async function modifyContactBlocked(instanceId: string, phone: string, ac
 // Denunciar contato
 export async function reportContact(instanceId: string, phone: string) {
   try {
-    const result = await Zapi.reportContact(
-      { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-      phone
-    )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.reportContact(tokens, phone)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao denunciar contato:', error)
@@ -140,14 +103,8 @@ export async function reportContact(instanceId: string, phone: string) {
 // Pegar metadata do contato
 export async function getContactMetadata(instanceId: string, phone: string) {
   try {
-    const result = await Zapi.getContactMetadata(
-      { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-      phone
-    )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.getContactMetadata(tokens, phone)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao pegar metadata do contato:', error)
@@ -158,14 +115,8 @@ export async function getContactMetadata(instanceId: string, phone: string) {
 // Pegar imagem do contato
 export async function getContactImage(instanceId: string, phone: string) {
   try {
-    const result = await Zapi.getContactImage(
-      { 
-          instanceId: instanceId,
-          instanceToken: 'token',
-          clientSecurityToken: 'security_token'
-        },
-      phone
-    )
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.getContactImage(tokens, phone)
     return { success: true, data: result }
   } catch (error) {
     console.error('Erro ao pegar imagem do contato:', error)
@@ -377,12 +328,8 @@ export async function deleteTag(id: string) {
 // Função para sincronizar contatos da ZAPI
 export async function syncContactsFromZApi(instanceId: string) {
   try {
-    // Buscar contatos da ZAPI
-    const result = await Zapi.getContacts({
-      instanceId: instanceId,
-      instanceToken: 'token',
-      clientSecurityToken: 'security_token'
-    })
+    const tokens = await getInstanceTokens(instanceId)
+    const result = await Zapi.getContacts(tokens)
 
     if (!result || !Array.isArray(result)) {
       return { success: false, error: 'Nenhum contato encontrado na ZAPI' }
@@ -454,5 +401,32 @@ export async function syncContactsFromZApi(instanceId: string) {
   } catch (error) {
     console.error('Erro ao sincronizar contatos da ZAPI:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
+// Função auxiliar para buscar tokens da instância
+async function getInstanceTokens(instanceId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    throw new Error('Usuário não autenticado')
+  }
+
+  const { data: instance, error: instanceError } = await supabase
+    .from('zapi_instances')
+    .select('instance_id, instance_token, client_security_token')
+    .eq('id', instanceId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (instanceError || !instance) {
+    throw new Error('Instância não encontrada')
+  }
+
+  return {
+    instanceId: instance.instance_id,
+    instanceToken: instance.instance_token,
+    clientSecurityToken: instance.client_security_token
   }
 }
