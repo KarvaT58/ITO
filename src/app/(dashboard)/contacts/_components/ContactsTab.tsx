@@ -67,6 +67,8 @@ interface ZApiInstance {
 }
 
 export function ContactsTab() {
+  console.log('ContactsTab renderizando...')
+  
   // Estados
   const [contacts, setContacts] = useState<Contact[]>([])
   const [tags, setTags] = useState<Tag[]>([])
@@ -448,6 +450,12 @@ export function ContactsTab() {
       toast.error('Erro ao deletar contatos')
     }
   }
+
+  console.log('Renderizando ContactsTab com:', { 
+    contacts: contacts.length, 
+    isSelecting, 
+    selectedContacts: selectedContacts.length 
+  })
 
   return (
     <div className="space-y-6">
