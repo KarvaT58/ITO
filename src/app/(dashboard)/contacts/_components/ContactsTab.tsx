@@ -38,7 +38,8 @@ import {
   deleteContacts,
   checkPhoneExists,
   modifyContactBlocked,
-  reportContact
+  reportContact,
+  getContactImage
 } from '@/server/actions/contacts'
 import { listZapiInstances } from '@/server/actions/zapi'
 
@@ -108,6 +109,7 @@ export function ContactsTab() {
   const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false)
   const [isEditContactOpen, setIsEditContactOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
+  const [contactImage, setContactImage] = useState<string | null>(null)
   const [editingContact, setEditingContact] = useState({
     id: '',
     name: '',
@@ -605,6 +607,48 @@ export function ContactsTab() {
     }
   }
 
+  const handleGetContactImage = async (contact: Contact) => {
+    try {
+      // Buscar instâncias Z-API disponíveis
+      const instances = await listZapiInstances()
+      
+      if (!instances || instances.length === 0) {
+        toast.error('Nenhuma instância Z-API configurada')
+        return
+      }
+
+      // Usar a primeira instância disponível
+      const instance = instances[0]
+      
+      toast.loading(`Buscando imagem de ${contact.name}...`, { id: 'get-image' })
+      
+      // Buscar imagem do contato via Z-API
+      const result = await getContactImage(instance.id, contact.phone)
+      
+      if (result.success && result.data) {
+        const imageData = result.data as { link: string }[]
+        if (imageData && imageData.length > 0 && imageData[0].link) {
+          setContactImage(imageData[0].link)
+          toast.dismiss('get-image')
+          toast.success(`✅ Imagem de ${contact.name} carregada!`)
+        } else {
+          toast.dismiss('get-image')
+          toast.info(`${contact.name} não possui foto de perfil`)
+          setContactImage(null)
+        }
+      } else {
+        toast.dismiss('get-image')
+        toast.error('Erro ao buscar imagem do contato')
+        setContactImage(null)
+      }
+    } catch (error) {
+      toast.dismiss('get-image')
+      console.error('Erro ao buscar imagem do contato:', error)
+      toast.error('Erro ao buscar imagem do contato')
+      setContactImage(null)
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -928,7 +972,10 @@ export function ContactsTab() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => {
                           setSelectedContact(contact)
+                          setContactImage(null) // Limpar imagem anterior
                           setIsContactDetailsOpen(true)
+                          // Buscar imagem do contato
+                          handleGetContactImage(contact)
                         }}>
                           <Eye className="h-4 w-4 mr-2" />
                           Ver Detalhes
@@ -1317,6 +1364,42 @@ export function ContactsTab() {
           </DialogHeader>
           {selectedContact && (
             <div className="space-y-4">
+              {/* Imagem do Contato */}
+              <div className="flex justify-center">
+                {contactImage ? (
+                  <div className="relative">
+                    <img 
+                      src={contactImage} 
+                      alt={`Foto de ${selectedContact.name}`}
+                      className="w-24 h-24 rounded-full object-cover border-2 border-primary"
+                      onError={() => setContactImage(null)}
+                    />
+                    <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-1">
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/25">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Botão para recarregar imagem */}
+              {!contactImage && (
+                <div className="flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleGetContactImage(selectedContact)}
+                    className="text-xs"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Carregar Foto
+                  </Button>
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Nome</Label>
