@@ -45,54 +45,54 @@ const data = {
     },
     {
       title: "Chat WhatsApp",
-      url: "#",
+      url: "/chat",
       icon: MessageCircle,
     },
     {
       title: "Grupos WhatsApp",
-      url: "#",
+      url: "/groups",
       icon: Users,
     },
     {
       title: "Campanhas Contatos",
-      url: "#",
+      url: "/campaigns/contacts",
       icon: Megaphone,
     },
     {
       title: "Campanhas Grupos",
-      url: "#",
+      url: "/campaigns/groups",
       icon: MegaphoneIcon,
     },
     {
       title: "Contatos",
-      url: "#",
+      url: "/contacts",
       icon: User,
     },
   ],
   navSecondary: [
     {
       title: "Chat Interno",
-      url: "#",
+      url: "/internal-chat",
       icon: MessageSquare,
     },
     {
       title: "Equipe",
-      url: "#",
+      url: "/team",
       icon: Users2,
     },
     {
       title: "N8N",
-      url: "#",
+      url: "/n8n",
       icon: Workflow,
     },
     {
       title: "Relatórios",
-      url: "#",
+      url: "/reports",
       icon: BarChart3,
     },
     {
       title: "Relatórios Campanhas",
-      url: "#",
+      url: "/reports/campaigns",
       icon: BarChart,
     },
   ],
@@ -104,7 +104,7 @@ const data = {
     },
     {
       title: "Ajuda",
-      url: "#",
+      url: "/help",
       icon: HelpCircle,
     },
   ],
