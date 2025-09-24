@@ -967,7 +967,7 @@ async function getInstanceTokens(instanceId: string) {
       const { data: instance, error: instanceError } = await supabase
         .from('zapi_instances')
         .select('instance_id, instance_token, client_security_token')
-        .eq('id', instanceId)
+        .eq('instance_id', instanceId)
         .eq('is_active', true)
         .single()
 

@@ -344,7 +344,7 @@ export function ContactsTab() {
           if (instances && instances.length > 0) {
             const instance = instances[0]
             
-            const zapiResult = await addContactsToZApi(instance.id, [{
+            const zapiResult = await addContactsToZApi(instance.instance_id, [{
               firstName: newContact.firstName,
               lastName: newContact.lastName || undefined,
               phone: newContact.phone
@@ -544,7 +544,7 @@ export function ContactsTab() {
       
       toast.loading('Verificando WhatsApp...', { id: 'check-whatsapp' })
       
-      const result = await checkPhoneExists(instance.id, contact.phone)
+      const result = await checkPhoneExists(instance.instance_id, contact.phone)
       
       if (result.success && result.data) {
         const response = result.data as PhoneExistsResponse
@@ -598,7 +598,7 @@ export function ContactsTab() {
       toast.loading(`${actionText} ${contact.name}...`, { id: 'block-contact' })
       
       // Bloquear/desbloquear contato via Z-API
-      const result = await modifyContactBlocked(instance.id, contact.phone, action)
+      const result = await modifyContactBlocked(instance.instance_id, contact.phone, action)
       
       if (result.success && result.data) {
         // Atualizar o contato no banco de dados
@@ -648,7 +648,7 @@ export function ContactsTab() {
       toast.loading(`Denunciando ${contact.name}...`, { id: 'report-contact' })
       
       // Denunciar contato via Z-API
-      const result = await reportContact(instance.id, contact.phone)
+      const result = await reportContact(instance.instance_id, contact.phone)
       
       if (result.success && result.data) {
         toast.dismiss('report-contact')
@@ -680,7 +680,7 @@ export function ContactsTab() {
       toast.loading(`Buscando imagem de ${contact.name}...`, { id: 'get-image' })
       
       // Buscar imagem do contato via Z-API
-      const result = await getContactImage(instance.id, contact.phone)
+      const result = await getContactImage(instance.instance_id, contact.phone)
       
       if (result.success && result.data) {
         console.log('Resposta da Z-API para imagem:', result.data)
@@ -852,7 +852,7 @@ export function ContactsTab() {
           if (instances && instances.length > 0 && phoneNumbers.length > 0) {
             const instance = instances[0]
             
-            const zapiResult = await removeContactsFromZApi(instance.id, phoneNumbers)
+            const zapiResult = await removeContactsFromZApi(instance.instance_id, phoneNumbers)
             
             if (zapiResult.success) {
               toast.success(`${result.deletedCount} contato(s) removido(s) com sucesso do sistema e do WhatsApp!`)
