@@ -67,8 +67,6 @@ interface ZApiInstance {
 }
 
 export function ContactsTab() {
-  console.log('ContactsTab renderizando...')
-  
   // Estados
   const [contacts, setContacts] = useState<Contact[]>([])
   const [tags, setTags] = useState<Tag[]>([])
@@ -82,9 +80,6 @@ export function ContactsTab() {
   const [totalContacts, setTotalContacts] = useState(0)
   const contactsPerPage = 40
 
-  // Estados para seleção múltipla
-  const [selectedContacts, setSelectedContacts] = useState<string[]>([])
-  const [isSelecting, setIsSelecting] = useState(false)
 
   // Estados para modais
   const [isAddContactOpen, setIsAddContactOpen] = useState(false)
@@ -411,36 +406,13 @@ export function ContactsTab() {
     }
   }
 
-  // Funções para seleção múltipla
-  const toggleContactSelection = (contactId: string) => {
-    setSelectedContacts(prev => 
-      prev.includes(contactId) 
-        ? prev.filter(id => id !== contactId)
-        : [...prev, contactId]
-    )
-  }
-
-  const selectAllContacts = () => {
-    setSelectedContacts(contacts.map(contact => contact.id))
-  }
-
-  const clearSelection = () => {
-    setSelectedContacts([])
-  }
-
-  const handleDeleteSelected = async () => {
-    if (selectedContacts.length === 0) {
-      toast.error('Nenhum contato selecionado')
-      return
-    }
-
+  // Função para deletar contato individual
+  const handleDeleteContact = async (contactIds: string[]) => {
     try {
-      const result = await deleteContacts(selectedContacts)
+      const result = await deleteContacts(contactIds)
       
       if (result.success) {
         toast.success(`${result.deletedCount} contato(s) deletado(s) com sucesso`)
-        clearSelection()
-        setIsSelecting(false)
         loadContacts(currentPage) // Recarregar a página atual
       } else {
         toast.error(result.error || 'Erro ao deletar contatos')
@@ -451,11 +423,6 @@ export function ContactsTab() {
     }
   }
 
-  console.log('Renderizando ContactsTab com:', { 
-    contacts: contacts.length, 
-    isSelecting, 
-    selectedContacts: selectedContacts.length 
-  })
 
   return (
     <div className="space-y-6">
@@ -477,43 +444,14 @@ export function ContactsTab() {
         </div>
         
         <div className="flex items-center gap-2">
-          {!isSelecting ? (
-            <>
-              <Button variant="outline" onClick={handleSyncFromZApi}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Sincronizar ZAPI
-              </Button>
-              <Button variant="outline" onClick={() => handleAddContactsToZApi(contacts)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Adicionar Todos à ZAPI
-              </Button>
-              <Button variant="outline" onClick={() => setIsSelecting(true)}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Selecionar Contatos
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={selectAllContacts}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Selecionar Todos
-              </Button>
-              <Button variant="outline" onClick={clearSelection}>
-                <XCircle className="h-4 w-4 mr-2" />
-                Limpar Seleção
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteSelected} disabled={selectedContacts.length === 0}>
-                <XCircle className="h-4 w-4 mr-2" />
-                Apagar Selecionados ({selectedContacts.length})
-              </Button>
-              <Button variant="outline" onClick={() => {
-                setIsSelecting(false)
-                clearSelection()
-              }}>
-                Cancelar
-              </Button>
-            </>
-          )}
+          <Button variant="outline" onClick={handleSyncFromZApi}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Sincronizar ZAPI
+          </Button>
+          <Button variant="outline" onClick={() => handleAddContactsToZApi(contacts)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar Todos à ZAPI
+          </Button>
         </div>
       </div>
 
@@ -604,16 +542,6 @@ export function ContactsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                {isSelecting && (
-                  <TableHead className="w-12">
-                    <input
-                      type="checkbox"
-                      checked={selectedContacts.length === contacts.length && contacts.length > 0}
-                      onChange={selectAllContacts}
-                      className="rounded"
-                    />
-                  </TableHead>
-                )}
                 <TableHead>Nome</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead>Email</TableHead>
@@ -625,16 +553,6 @@ export function ContactsTab() {
             <TableBody>
               {contacts.map((contact) => (
                 <TableRow key={contact.id}>
-                  {isSelecting && (
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selectedContacts.includes(contact.id)}
-                        onChange={() => toggleContactSelection(contact.id)}
-                        className="rounded"
-                      />
-                    </TableCell>
-                  )}
                   <TableCell className="font-medium">{contact.name}</TableCell>
                   <TableCell>{contact.phone}</TableCell>
                   <TableCell>{contact.email || '-'}</TableCell>
@@ -694,6 +612,13 @@ export function ContactsTab() {
                         <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
                           <Flag className="h-4 w-4 mr-2" />
                           Denunciar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteContact([contact.id])}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Apagar Contato
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
