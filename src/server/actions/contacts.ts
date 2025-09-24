@@ -368,17 +368,22 @@ export async function syncContactsFromZApi(instanceId: string) {
     // Processar cada contato da ZAPI
     for (const zapiContact of result) {
       try {
+        console.log('Processando contato:', zapiContact.name, zapiContact.phone)
+        
         // Verificar se contato já existe
-        const { data: existingContact } = await supabase
+        const { data: existingContact, error: checkError } = await supabase
           .from('contacts')
           .select('id')
           .eq('user_id', userId)
           .eq('phone', zapiContact.phone)
           .single()
 
+        console.log('Verificação de contato existente:', { existingContact, checkError })
+
         if (existingContact) {
+          console.log('Atualizando contato existente:', existingContact.id)
           // Atualizar contato existente
-          await supabase
+          const { data: updatedContact, error: updateError } = await supabase
             .from('contacts')
             .update({
               name: zapiContact.name || zapiContact.short || 'Contato',
@@ -390,9 +395,17 @@ export async function syncContactsFromZApi(instanceId: string) {
               updated_at: new Date().toISOString()
             })
             .eq('id', existingContact.id)
+            .select()
+            .single()
+
+          console.log('Resultado da atualização:', { updatedContact, updateError })
+          if (updatedContact) {
+            syncedContacts.push(updatedContact)
+          }
         } else {
+          console.log('Criando novo contato para:', zapiContact.name)
           // Criar novo contato
-          const { data: newContact } = await supabase
+          const { data: newContact, error: insertError } = await supabase
             .from('contacts')
             .insert({
               user_id: userId,
@@ -408,6 +421,7 @@ export async function syncContactsFromZApi(instanceId: string) {
             .select()
             .single()
 
+          console.log('Resultado da inserção:', { newContact, insertError })
           if (newContact) {
             syncedContacts.push(newContact)
           }
