@@ -434,7 +434,26 @@ async function getInstanceTokens(instanceId: string) {
   // Se estamos no Vercel, pular verificação de usuário
   if (isVercel) {
     console.log('Vercel: Pulando verificação de usuário para Server Actions')
-    // Buscar primeira instância disponível
+    
+    // Se temos um instanceId específico, tentar buscar por ele primeiro
+    if (instanceId && instanceId !== 'undefined') {
+      const { data: instance, error: instanceError } = await supabase
+        .from('zapi_instances')
+        .select('instance_id, instance_token, client_security_token')
+        .eq('id', instanceId)
+        .eq('is_active', true)
+        .single()
+
+      if (instance && !instanceError) {
+        return {
+          instanceId: instance.instance_id,
+          instanceToken: instance.instance_token,
+          clientSecurityToken: instance.client_security_token
+        }
+      }
+    }
+    
+    // Se não encontrou por ID específico, buscar primeira instância ativa
     const { data: instances, error: instanceError } = await supabase
       .from('zapi_instances')
       .select('instance_id, instance_token, client_security_token')

@@ -102,7 +102,7 @@ export function ContactsTab() {
   // Simular instância selecionada
   useEffect(() => {
     setSelectedInstance({
-      id: '1',
+      id: 'b439e7c9-0819-4fbd-9fc6-7701f4027a5e',
       alias: 'Zapi',
       instance_id: '3E6044FF2AD36009F1136EDA9E2AF219',
       instance_token: '3A73D8E67AA46D688B442AD5',
