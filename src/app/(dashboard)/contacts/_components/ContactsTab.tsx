@@ -625,12 +625,12 @@ export function ContactsTab() {
                     />
                   </TableHead>
                 )}
-                <TableHead>Nome</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Etiquetas</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="w-48">Nome</TableHead>
+                <TableHead className="w-32">Telefone</TableHead>
+                <TableHead className="w-32">Email</TableHead>
+                <TableHead className="w-32">Etiquetas</TableHead>
+                <TableHead className="w-32">Status</TableHead>
+                <TableHead className="w-20 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -646,10 +646,10 @@ export function ContactsTab() {
                       />
                     </TableCell>
                   )}
-                  <TableCell className="font-medium">{contact.name}</TableCell>
-                  <TableCell>{contact.phone}</TableCell>
-                  <TableCell>{contact.email || '-'}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium w-48">{contact.name}</TableCell>
+                  <TableCell className="w-32">{contact.phone}</TableCell>
+                  <TableCell className="w-32">{contact.email || '-'}</TableCell>
+                  <TableCell className="w-32">
                     <div className="flex flex-wrap gap-1">
                       {contact.tags.map((tag, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
@@ -658,7 +658,7 @@ export function ContactsTab() {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-32">
                     <div className="flex items-center gap-2">
                       {contact.hasWhatsapp ? (
                         <Badge variant="default" className="bg-green-500">
@@ -679,7 +679,7 @@ export function ContactsTab() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right w-20">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
