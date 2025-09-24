@@ -472,6 +472,45 @@ export async function importContactsFromCSV(contacts: Array<{
     // Se estamos no Vercel, usar um UUID mock válido
     const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
     
+    // Coletar todas as etiquetas únicas do CSV
+    const uniqueTags = [...new Set(contacts.map(c => c.tag).filter(Boolean))]
+    
+    // Criar etiquetas que não existem
+    const createdTags = []
+    for (const tagName of uniqueTags) {
+      if (tagName) {
+        try {
+          // Verificar se etiqueta já existe
+          const { data: existingTag } = await supabase
+            .from('tags')
+            .select('id')
+            .eq('name', tagName)
+            .eq('user_id', userId)
+            .single()
+          
+          if (!existingTag) {
+            // Criar nova etiqueta
+            const { data: newTag, error: tagError } = await supabase
+              .from('tags')
+              .insert([{
+                name: tagName,
+                color: '#3b82f6', // Cor padrão azul
+                user_id: userId
+              }])
+              .select()
+              .single()
+            
+            if (!tagError && newTag) {
+              createdTags.push(newTag)
+              console.log(`Etiqueta criada: ${tagName}`)
+            }
+          }
+        } catch (error) {
+          console.error(`Erro ao criar etiqueta ${tagName}:`, error)
+        }
+      }
+    }
+    
     const validContacts = []
     const duplicates = []
     const errors = []
@@ -526,13 +565,15 @@ export async function importContactsFromCSV(contacts: Array<{
       insertedContacts = data || []
     }
     
-    return {
-      success: true,
+    return { 
+      success: true, 
       data: {
         imported: insertedContacts.length,
         duplicates: duplicates.length,
         errors: errors.length,
         total: contacts.length,
+        tagsCreated: createdTags.length,
+        createdTags: createdTags.map(tag => tag.name),
         details: {
           inserted: insertedContacts,
           duplicates,

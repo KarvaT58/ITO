@@ -383,11 +383,14 @@ export function ContactsTab() {
       setImportProgress(100)
 
       if (result.success && result.data) {
-        const { imported, duplicates, errors } = result.data
+        const { imported, duplicates, errors, tagsCreated, createdTags } = result.data
         
-        toast.success(
-          `Importação concluída! ${imported} contatos importados, ${duplicates} duplicados removidos, ${errors} erros`
-        )
+        let message = `Importação concluída! ${imported} contatos importados`
+        if (duplicates > 0) message += `, ${duplicates} duplicados removidos`
+        if (errors > 0) message += `, ${errors} erros`
+        if (tagsCreated > 0) message += `, ${tagsCreated} etiquetas criadas: ${createdTags.join(', ')}`
+        
+        toast.success(message)
         
         // Mostrar detalhes se houver duplicatas ou erros
         if (duplicates > 0 || errors > 0) {
@@ -399,6 +402,7 @@ export function ContactsTab() {
         setIsImportOpen(false)
         loadContacts()
         loadTotalStats() // Atualizar estatísticas
+        loadTags() // Recarregar etiquetas para mostrar as novas
       } else {
         toast.error(result.error || 'Erro ao importar contatos')
       }
