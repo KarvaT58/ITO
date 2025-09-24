@@ -961,27 +961,9 @@ async function getInstanceTokens(instanceId: string) {
     console.log('Vercel: Pulando verificação de usuário para Server Actions')
     console.log('Vercel: InstanceId recebido:', instanceId)
     
-    // Se temos um instanceId específico, tentar buscar por ele primeiro
-    if (instanceId && instanceId !== 'undefined') {
-      console.log('Vercel: Buscando instância por ID específico:', instanceId)
-      const { data: instance, error: instanceError } = await supabase
-        .from('zapi_instances')
-        .select('instance_id, instance_token, client_security_token')
-        .eq('instance_id', instanceId)
-        .eq('is_active', true)
-        .single()
-
-      console.log('Vercel: Resultado busca por ID:', { instance, instanceError })
-
-      if (instance && !instanceError) {
-        console.log('Vercel: Instância encontrada por ID específico')
-        return {
-          instanceId: instance.instance_id, // Este é o instance_id real da Z-API
-          instanceToken: instance.instance_token,
-          clientSecurityToken: instance.client_security_token
-        }
-      }
-    }
+  // IGNORAR instanceId recebido e sempre buscar primeira instância ativa
+  // Isso resolve o problema do cache do Vercel
+  console.log('Vercel: Ignorando instanceId recebido e buscando primeira instância ativa')
     
     // Se não encontrou por ID específico, buscar primeira instância ativa
     console.log('Vercel: Buscando primeira instância ativa')
