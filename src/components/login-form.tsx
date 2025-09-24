@@ -108,17 +108,23 @@ export function LoginForm({
   className,
   ...props
 }: LoginFormProps) {
-  const router = useRouter()
   const { supabase, isClient } = useSupabase()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
     if (!isClient || !supabase) {
       setError('Aguarde o carregamento...')
+      return
+    }
+    
+    // Evitar múltiplos logins simultâneos
+    if (isLoading || isRedirecting) {
+      console.log('Login já em andamento, ignorando...')
       return
     }
     
@@ -163,13 +169,16 @@ export function LoginForm({
         console.log('Login bem-sucedido, redirecionando para dashboard...')
         console.log('Dados do usuário:', data.user)
         
+        // Marcar como redirecionando para evitar múltiplos logins
+        setIsRedirecting(true)
+        
         // Aguardar a sessão ser persistida antes do redirecionamento
         console.log('Aguardando persistência da sessão...')
         setTimeout(() => {
           console.log('Redirecionando para dashboard...')
-          // Usar router.replace para evitar histórico de navegação
-          router.replace("/dashboard")
-        }, 1000) // Aguardar 1 segundo para a sessão ser persistida
+          // Forçar redirecionamento completo da página
+          window.location.href = "/dashboard"
+        }, 2000) // Aguardar 2 segundos para a sessão ser persistida
       }
     } catch {
       setError('Erro ao fazer login. Tente novamente.')
