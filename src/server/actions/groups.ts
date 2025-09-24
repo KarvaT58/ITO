@@ -34,9 +34,46 @@ export async function createGroup(data: {
   groupName: string
   phones: string[]
   autoInvite: boolean
+  description?: string
+  photo?: File
 }) {
   try {
     const context = await getZApiContext()
+    
+    // Preparar o body da requisição
+    const body: {
+      autoInvite: boolean
+      groupName: string
+      phones: string[]
+      description?: string
+      photo?: string
+    } = {
+      autoInvite: data.autoInvite,
+      groupName: data.groupName,
+      phones: data.phones
+    }
+
+    // Adicionar descrição se fornecida
+    if (data.description && data.description.trim()) {
+      body.description = data.description.trim()
+    }
+
+    // Adicionar foto se fornecida
+    if (data.photo) {
+      // Converter File para base64
+      const base64Photo = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          // Remover o prefixo "data:image/...;base64," para obter apenas o base64
+          const base64 = result.split(',')[1]
+          resolve(base64)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(data.photo!)
+      })
+      body.photo = base64Photo
+    }
     
     const response = await zapiFetch({
       instanceId: context.instanceId,
@@ -44,11 +81,7 @@ export async function createGroup(data: {
       clientSecurityToken: context.clientSecurityToken,
       path: "/create-group",
       method: "POST",
-      body: {
-        autoInvite: data.autoInvite,
-        groupName: data.groupName,
-        phones: data.phones
-      }
+      body
     })
 
     return {

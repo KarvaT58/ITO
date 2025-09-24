@@ -176,7 +176,9 @@ export function GroupsTab() {
       const result = await createGroup({
         groupName: newGroupName,
         phones: selectedContacts,
-        autoInvite: true
+        autoInvite: true,
+        description: newGroupDescription || undefined,
+        photo: newGroupPhoto || undefined
       })
 
       if (result.success) {
