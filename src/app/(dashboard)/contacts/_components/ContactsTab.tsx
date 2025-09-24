@@ -97,7 +97,6 @@ export function ContactsTab() {
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false)
   const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false)
-  const [isAddTagToContactOpen, setIsAddTagToContactOpen] = useState(false)
   const [isEditContactOpen, setIsEditContactOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [editingContact, setEditingContact] = useState({
@@ -423,34 +422,6 @@ export function ContactsTab() {
     }
   }
 
-  const handleSaveContactTags = async () => {
-    if (!selectedContact) {
-      toast.error('Nenhum contato selecionado')
-      return
-    }
-
-    console.log('Salvando etiquetas para contato:', selectedContact.id, 'Etiquetas:', selectedContact.tags)
-
-    try {
-      const result = await updateContact(selectedContact.id, {
-        tags: selectedContact.tags
-      })
-
-      console.log('Resultado da atualização:', result)
-
-      if (result.success) {
-        toast.success('Etiquetas atualizadas com sucesso!')
-        setIsAddTagToContactOpen(false)
-        loadContacts() // Recarregar a lista para mostrar as mudanças
-        loadTotalStats() // Atualizar estatísticas
-      } else {
-        toast.error(result.error || 'Erro ao atualizar etiquetas')
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar etiquetas:', error)
-      toast.error('Erro ao atualizar etiquetas')
-    }
-  }
 
   const handleEditContact = (contact: Contact) => {
     setEditingContact({
@@ -822,13 +793,6 @@ export function ContactsTab() {
                         <DropdownMenuItem onClick={() => handleEditContact(contact)}>
                           <User className="h-4 w-4 mr-2" />
                           Editar Contato
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          setSelectedContact(contact)
-                          setIsAddTagToContactOpen(true)
-                        }}>
-                          <Tag className="h-4 w-4 mr-2" />
-                          Adicionar Etiquetas
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
                           <Phone className="h-4 w-4 mr-2" />      
@@ -1359,69 +1323,6 @@ export function ContactsTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Adicionar Etiquetas ao Contato */}
-      <Dialog open={isAddTagToContactOpen} onOpenChange={setIsAddTagToContactOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Adicionar Etiquetas</DialogTitle>
-            <DialogDescription>
-              Selecione as etiquetas para o contato {selectedContact?.name}.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedContact && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Etiquetas Disponíveis</Label>
-                <div className="max-h-40 overflow-y-auto space-y-2">
-                  {tags.map(tag => (
-                    <div key={tag.id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`tag-${tag.id}`}
-                        checked={selectedContact.tags.includes(tag.name)}
-                        onChange={(e) => {
-                          const updatedTags = e.target.checked
-                            ? [...selectedContact.tags, tag.name]
-                            : selectedContact.tags.filter(t => t !== tag.name)
-                          console.log('Atualizando etiquetas:', updatedTags)
-                          setSelectedContact({ ...selectedContact, tags: updatedTags })
-                        }}
-                        className="rounded"
-                      />
-                      <div 
-                        className="w-4 h-4 rounded-full" 
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      <Label htmlFor={`tag-${tag.id}`} className="text-sm">
-                        {tag.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Etiquetas Atuais</Label>
-                <div className="flex flex-wrap gap-1">
-                  {selectedContact.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddTagToContactOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveContactTags}>
-              Salvar Etiquetas
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
