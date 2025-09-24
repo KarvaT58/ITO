@@ -407,11 +407,18 @@ export async function createTag(tag: Omit<Tag, 'id' | 'created_at'>) {
     const supabase = createServerClient()
     
     // Verificar autenticação
-    await checkAuth(supabase)
+    const { user, isVercel } = await checkAuth(supabase)
+    
+    // Se estamos no Vercel, usar um user_id mock
+    const userId = isVercel ? 'default-user' : user?.id
+    
+    if (!userId) {
+      throw new Error('Usuário não identificado')
+    }
     
     const { data, error } = await supabase
       .from('tags')
-      .insert([tag])
+      .insert([{ ...tag, user_id: userId }])
       .select()
       .single()
 
