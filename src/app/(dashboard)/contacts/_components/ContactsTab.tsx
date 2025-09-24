@@ -40,7 +40,9 @@ import {
   modifyContactBlocked,
   reportContact,
   getContactImage,
-  removeContactsFromZApi
+  removeContactsFromZApi,
+  processImportInBackground,
+  syncContactsInBackground
 } from '@/server/actions/contacts'
 import { listZapiInstances } from '@/server/actions/zapi'
 
@@ -292,13 +294,21 @@ export function ContactsTab() {
     }
 
     try {
-      toast.loading('Sincronizando contatos da ZAPI...', { id: 'sync-contacts' })
-      const result = await syncContactsFromZApi(selectedInstance.id)
+      toast.loading('Sincronizando contatos em background...', { 
+        id: 'sync-contacts',
+        description: 'Você pode navegar para outras páginas. O processo continuará em background.'
+      })
       
-      if (result.success) {
+      const result = await syncContactsInBackground(selectedInstance.id)
+      
+      if (result.success && result.data) {
         toast.dismiss('sync-contacts')
-        toast.success(`${result.data?.length || 0} contato(s) sincronizado(s)`)
+        const { synced, errors, total } = result.data
+        let message = `Sincronização concluída! ${synced} contato(s) sincronizado(s) de ${total}`
+        if (errors > 0) message += `, ${errors} erros`
+        toast.success(message)
         loadContacts()
+        loadTotalStats()
       } else {
         toast.dismiss('sync-contacts')
         toast.error(result.error || 'Erro ao sincronizar contatos')
@@ -422,88 +432,43 @@ export function ContactsTab() {
       }
 
       const instance = instances[0]
-      const verifiedContacts = []
-      let verifiedCount = 0
 
-      // Verificar WhatsApp para cada contato
-      toast.loading('Verificando números de WhatsApp...', { id: 'verify-whatsapp' })
-      
-      for (let i = 0; i < csvContacts.length; i++) {
-        const contact = csvContacts[i]
-        
-        try {
-          // Atualizar progresso
-          const progress = Math.round(((i + 1) / csvContacts.length) * 50) // 50% para verificação
-          setImportProgress(progress)
-          
-          // Verificar se o número tem WhatsApp
-          const whatsappResult = await checkPhoneExists(instance.id, contact.phone)
-          
-          if (whatsappResult.success && whatsappResult.data) {
-            const response = whatsappResult.data as PhoneExistsResponse
-            const hasWhatsApp = response.exists || response.existe
-            
-            // Adicionar status de WhatsApp ao contato
-            verifiedContacts.push({
-              ...contact,
-              has_whatsapp: hasWhatsApp
-            })
-            
-            if (hasWhatsApp) {
-              verifiedCount++
-            }
-          } else {
-            // Se não conseguir verificar, assumir que não tem WhatsApp
-            verifiedContacts.push({
-              ...contact,
-              has_whatsapp: false
-            })
-          }
-        } catch (error) {
-          console.error(`Erro ao verificar WhatsApp para ${contact.phone}:`, error)
-          // Se der erro, assumir que não tem WhatsApp
-          verifiedContacts.push({
-            ...contact,
-            has_whatsapp: false
-          })
-        }
-      }
+      // Mostrar toast de processamento em background
+      toast.loading('Processando importação em background...', { 
+        id: 'background-import',
+        description: 'Você pode navegar para outras páginas. O processo continuará em background.'
+      })
 
-      toast.dismiss('verify-whatsapp')
-      toast.success(`✅ Verificação concluída! ${verifiedCount} de ${csvContacts.length} contatos têm WhatsApp.`)
-
-      // Continuar com a importação
-      setImportProgress(60)
-      
-      // Simular progresso da importação
+      // Simular progresso visual
       const progressInterval = setInterval(() => {
         setImportProgress(prev => {
           if (prev >= 90) {
             clearInterval(progressInterval)
             return prev
           }
-          return prev + 5
+          return prev + 2
         })
-      }, 200)
+      }, 1000)
 
-      // Importar contatos com verificação de duplicatas
-      const result = await importContactsFromCSV(verifiedContacts)
+      // Processar importação em background no servidor
+      const result = await processImportInBackground(csvContacts, instance.id)
 
       clearInterval(progressInterval)
       setImportProgress(100)
+      toast.dismiss('background-import')
 
       if (result.success && result.data) {
-        const { imported, duplicates, errors, tagsCreated, createdTags } = result.data
+        const { imported, duplicates, errors, tagsCreated, createdTags, verifiedCount, totalContacts } = result.data
         
-        let message = `Importação concluída! ${imported} contatos importados (${verifiedCount} com WhatsApp)`
-        if (duplicates > 0) message += `, ${duplicates} duplicados removidos`
-        if (errors > 0) message += `, ${errors} erros`
-        if (tagsCreated > 0) message += `, ${tagsCreated} etiquetas criadas: ${createdTags.join(', ')}`
+        let message = `Importação concluída! ${imported} contatos importados (${verifiedCount} de ${totalContacts} com WhatsApp)`
+        if (duplicates && duplicates > 0) message += `, ${duplicates} duplicados removidos`
+        if (errors && errors > 0) message += `, ${errors} erros`
+        if (tagsCreated && tagsCreated > 0) message += `, ${tagsCreated} etiquetas criadas: ${createdTags?.join(', ') || ''}`
         
         toast.success(message)
         
         // Mostrar detalhes se houver duplicatas ou erros
-        if (duplicates > 0 || errors > 0) {
+        if ((duplicates && duplicates > 0) || (errors && errors > 0)) {
           console.log('Detalhes da importação:', result.data.details)
         }
         

@@ -457,6 +457,80 @@ export async function getTags() {
 }
 
 // Função para importar contatos CSV com verificação de duplicatas
+// Função para processar importação em background
+export async function processImportInBackground(contacts: Array<{
+  name: string
+  phone: string
+  email?: string
+  tag?: string
+  has_whatsapp?: boolean
+}>, instanceId: string) {
+  try {
+    const supabase = createServerClient()
+    const { user, isVercel } = await checkAuth(supabase)
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id
+    
+    if (!userId) {
+      throw new Error('Usuário não identificado')
+    }
+
+    const verifiedContacts = []
+    let verifiedCount = 0
+
+    // Processar cada contato com delay para evitar sobrecarga
+    for (let i = 0; i < contacts.length; i++) {
+      const contact = contacts[i]
+      
+      try {
+        // Verificar WhatsApp com timeout
+        const whatsappResult = await Promise.race([
+          Zapi.checkPhoneExists({ instanceId, instanceToken: '', clientSecurityToken: '' }, contact.phone),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 8000)
+          )
+        ]) as { exists?: boolean; existe?: boolean }
+        
+        const hasWhatsApp = whatsappResult?.exists || whatsappResult?.existe || false
+        
+        verifiedContacts.push({
+          ...contact,
+          has_whatsapp: hasWhatsApp
+        })
+        
+        if (hasWhatsApp) {
+          verifiedCount++
+        }
+      } catch (error) {
+        console.error(`Erro ao verificar WhatsApp para ${contact.phone}:`, error)
+        verifiedContacts.push({
+          ...contact,
+          has_whatsapp: false
+        })
+      }
+      
+      // Delay entre verificações
+      if (i < contacts.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 300))
+      }
+    }
+
+    // Importar contatos verificados
+    const result = await importContactsFromCSV(verifiedContacts)
+    
+    return {
+      success: true,
+      data: {
+        ...result.data,
+        verifiedCount,
+        totalContacts: contacts.length
+      }
+    }
+  } catch (error) {
+    console.error('Erro no processamento em background:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
 export async function importContactsFromCSV(contacts: Array<{
   name: string
   phone: string
@@ -628,6 +702,88 @@ export async function deleteTag(id: string) {
 }
 
 // Função para sincronizar contatos da ZAPI
+// Função para sincronização em background
+export async function syncContactsInBackground(instanceId: string) {
+  try {
+    const supabase = createServerClient()
+    const { user, isVercel } = await checkAuth(supabase)
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id
+    
+    if (!userId) {
+      throw new Error('Usuário não identificado')
+    }
+
+    // Buscar contatos da Z-API
+    const zapiContacts = await Zapi.getContacts({ instanceId, instanceToken: '', clientSecurityToken: '' })
+    
+    if (!zapiContacts || !Array.isArray(zapiContacts)) {
+      throw new Error('Erro ao buscar contatos da Z-API')
+    }
+
+    let syncedCount = 0
+    let errorCount = 0
+
+    // Processar cada contato com delay
+    for (let i = 0; i < zapiContacts.length; i++) {
+      const contact = zapiContacts[i]
+      
+      try {
+        const normalizedPhone = normalizePhoneNumber(contact.phone)
+        
+        // Verificar se o contato já existe
+        const { data: existingContact } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('phone', normalizedPhone)
+          .eq('user_id', userId)
+          .single()
+
+        if (!existingContact) {
+          // Criar novo contato
+          const { error } = await supabase
+            .from('contacts')
+            .insert([{
+              name: contact.name || contact.short || 'Contato sem nome',
+              phone: normalizedPhone,
+              email: null,
+              tags: [],
+              has_whatsapp: true,
+              is_blocked: false,
+              user_id: userId
+            }])
+
+          if (!error) {
+            syncedCount++
+          } else {
+            errorCount++
+            console.error('Erro ao criar contato:', error)
+          }
+        }
+      } catch (error) {
+        console.error(`Erro ao processar contato ${contact.phone}:`, error)
+        errorCount++
+      }
+      
+      // Delay entre processamentos
+      if (i < zapiContacts.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        synced: syncedCount,
+        errors: errorCount,
+        total: zapiContacts.length
+      }
+    }
+  } catch (error) {
+    console.error('Erro na sincronização em background:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
+  }
+}
+
 export async function syncContactsFromZApi(instanceId: string) {
   try {
     const tokens = await getInstanceTokens(instanceId)
