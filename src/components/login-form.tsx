@@ -160,8 +160,22 @@ export function LoginForm({
       }
 
       if (data.user) {
-        // Redirecionar para o dashboard
-        router.push("/dashboard")
+        console.log('Login bem-sucedido, redirecionando para dashboard...')
+        console.log('Dados do usuário:', data.user)
+        
+        // Aguardar um pouco para garantir que a sessão seja persistida
+        setTimeout(async () => {
+          try {
+            console.log('Tentando redirecionamento...')
+            await router.push("/dashboard")
+            console.log('Redirecionamento via router.push executado')
+          } catch (routerError) {
+            console.error('Erro no router.push:', routerError)
+            // Fallback: redirecionamento direto
+            console.log('Usando fallback window.location.href')
+            window.location.href = "/dashboard"
+          }
+        }, 100)
       }
     } catch {
       setError('Erro ao fazer login. Tente novamente.')

@@ -65,6 +65,8 @@ export async function middleware(req: NextRequest) {
   
   // Verificar se a rota atual precisa de autenticação
   const isProtectedRoute = protectedRoutes.some(route => req.nextUrl.pathname.startsWith(route))
+  
+  console.log('Middleware - Rota:', req.nextUrl.pathname, 'Protegida:', isProtectedRoute, 'Sessão:', !!session)
 
   if (isProtectedRoute && !session) {
     // Redirecionar para login se não estiver autenticado
