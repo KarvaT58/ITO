@@ -139,7 +139,7 @@ interface Contact {
   notify?: string
   vname?: string
   imgUrl?: string
-  isBlocked?: boolean
+  is_blocked?: boolean
   has_whatsapp?: boolean
   created_at: string
   updated_at: string

@@ -48,7 +48,7 @@ interface Contact {
   phone: string
   email?: string
   tags: string[]
-  isBlocked: boolean
+  is_blocked: boolean
   has_whatsapp: boolean
   createdAt: Date
   updatedAt: Date
@@ -225,7 +225,7 @@ export function ContactsTab() {
         setTotalStats({
           totalContacts: allContacts.length,
           withWhatsapp: allContacts.filter(c => c.has_whatsapp).length,
-          blocked: allContacts.filter(c => c.isBlocked).length
+          blocked: allContacts.filter(c => c.is_blocked).length
         })
       }
     } catch (error) {
@@ -532,8 +532,8 @@ export function ContactsTab() {
       // Usar a primeira instância disponível
       const instance = instances[0]
       
-      const action = contact.isBlocked ? 'unblock' : 'block'
-      const actionText = contact.isBlocked ? 'desbloqueando' : 'bloqueando'
+      const action = contact.is_blocked ? 'unblock' : 'block'
+      const actionText = contact.is_blocked ? 'desbloqueando' : 'bloqueando'
       
       toast.loading(`${actionText} ${contact.name}...`, { id: 'block-contact' })
       
@@ -543,13 +543,13 @@ export function ContactsTab() {
       if (result.success && result.data) {
         // Atualizar o contato no banco de dados
         const updateResult = await updateContact(contact.id, {
-          isBlocked: !contact.isBlocked
+          is_blocked: !contact.is_blocked
         })
         
         if (updateResult.success) {
           toast.dismiss('block-contact')
           toast.success(
-            contact.isBlocked 
+            contact.is_blocked 
               ? `✅ ${contact.name} foi desbloqueado!` 
               : `✅ ${contact.name} foi bloqueado!`
           )
@@ -877,7 +877,7 @@ export function ContactsTab() {
                           Sem WhatsApp
                         </Badge>
                       )}
-                      {contact.isBlocked && (
+                      {contact.is_blocked && (
                         <Badge variant="destructive">
                           <Shield className="h-3 w-3 mr-1" />
                           Bloqueado
@@ -910,7 +910,7 @@ export function ContactsTab() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleBlockContact(contact)}>
                           <Shield className="h-4 w-4 mr-2" />
-                          {contact.isBlocked ? 'Desbloquear' : 'Bloquear'}
+                          {contact.is_blocked ? 'Desbloquear' : 'Bloquear'}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
                           <Flag className="h-4 w-4 mr-2" />
@@ -1328,7 +1328,7 @@ export function ContactsTab() {
                 <div>
                   <Label className="text-sm font-medium">Status Bloqueio</Label>
                   <div className="flex items-center gap-1 mt-1">
-                    {selectedContact.isBlocked ? (
+                    {selectedContact.is_blocked ? (
                       <Badge variant="destructive">
                         <Shield className="h-3 w-3 mr-1" />
                         Bloqueado
