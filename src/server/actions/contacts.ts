@@ -742,12 +742,12 @@ export async function syncContactsInBackground(instanceId: string) {
       throw new Error('Instância Z-API não encontrada')
     }
 
-    // Buscar contatos da Z-API
+    // Buscar TODOS os contatos da Z-API (sem paginação)
     const zapiContacts = await Zapi.getContacts({ 
       instanceId, 
       instanceToken: tokens.instanceToken, 
       clientSecurityToken: tokens.clientSecurityToken 
-    })
+    }, 1, 1000) // Página 1, 1000 contatos por página
     
     if (!zapiContacts || !Array.isArray(zapiContacts)) {
       throw new Error('Erro ao buscar contatos da Z-API')
