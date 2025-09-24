@@ -116,7 +116,7 @@ export function ContactsTab() {
     const timeoutId = setTimeout(() => {
       setCurrentPage(1) // Reset para primeira página
       loadContacts(1)
-    }, 300) // Debounce de 300ms
+    }, searchTerm === '' ? 0 : 300) // Sem debounce quando busca está vazia
 
     return () => clearTimeout(timeoutId)
   }, [searchTerm, selectedTag])

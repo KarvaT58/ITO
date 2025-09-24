@@ -20,22 +20,37 @@ function normalizePhoneNumber(phone: string): string {
   // Remove todos os caracteres não numéricos
   const cleanPhone = phone.replace(/\D/g, '')
   
+  console.log('Normalizando número:', phone, '→', cleanPhone)
+  
+  // Se não começa com 55, adiciona
+  let processedPhone = cleanPhone
+  if (!cleanPhone.startsWith('55') && cleanPhone.length >= 10) {
+    processedPhone = '55' + cleanPhone
+  }
+  
   // Se começa com 55 (Brasil), processa
-  if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
-    const ddd = cleanPhone.substring(2, 4)
-    const number = cleanPhone.substring(4)
+  if (processedPhone.startsWith('55') && processedPhone.length >= 12) {
+    const ddd = processedPhone.substring(2, 4)
+    const number = processedPhone.substring(4)
+    
+    console.log('DDD:', ddd, 'Número:', number, 'Tamanho:', number.length)
     
     // Se tem 9 dígitos no número (13 total), remove o 9 extra
     if (number.length === 9 && number.startsWith('9')) {
-      return `55${ddd}${number.substring(1)}` // Remove o 9
+      const normalized = `55${ddd}${number.substring(1)}`
+      console.log('Normalizado (removendo 9):', normalized)
+      return normalized
     }
     // Se tem 8 dígitos no número (12 total), adiciona o 9
     else if (number.length === 8) {
-      return `55${ddd}9${number}` // Adiciona o 9
+      const normalized = `55${ddd}9${number}`
+      console.log('Normalizado (adicionando 9):', normalized)
+      return normalized
     }
   }
   
-  return cleanPhone
+  console.log('Número final:', processedPhone)
+  return processedPhone
 }
 
 // Função para gerar variações de um número para verificação
@@ -69,7 +84,12 @@ async function checkContactExists(phone: string, userId: string): Promise<{ exis
   const supabase = createServerClient()
   const variations = getPhoneVariations(phone)
   
+  console.log('Verificando duplicatas para:', phone)
+  console.log('Variações geradas:', variations)
+  console.log('User ID:', userId)
+  
   for (const variation of variations) {
+    console.log('Verificando variação:', variation)
     const { data, error } = await supabase
       .from('contacts')
       .select('*')
@@ -77,11 +97,15 @@ async function checkContactExists(phone: string, userId: string): Promise<{ exis
       .eq('phone', variation)
       .single()
     
+    console.log('Resultado da busca:', { data, error })
+    
     if (data && !error) {
+      console.log('Contato duplicado encontrado:', data)
       return { exists: true, existingContact: data }
     }
   }
   
+  console.log('Nenhum contato duplicado encontrado')
   return { exists: false }
 }
 
