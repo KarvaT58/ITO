@@ -786,3 +786,43 @@ async function getInstanceTokens(instanceId: string) {
     clientSecurityToken: instance.client_security_token
   }
 }
+
+// Função para deletar contatos
+export async function deleteContacts(contactIds: string[]): Promise<{ success: boolean; error?: string; deletedCount?: number }> {
+  try {
+    const supabase = createServerClient()
+    
+    // Verificar autenticação
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const isVercel = process.env.VERCEL === '1'
+    const userId = isVercel ? '00000000-0000-0000-0000-000000000000' : user?.id || '00000000-0000-0000-0000-000000000000'
+    
+    if (!isVercel && (!user || authError)) {
+      return { success: false, error: 'Usuário não autenticado' }
+    }
+
+    if (!contactIds || contactIds.length === 0) {
+      return { success: false, error: 'Nenhum contato selecionado' }
+    }
+
+    console.log('Deletando contatos:', contactIds, 'para usuário:', userId)
+
+    // Deletar contatos
+    const { data, error } = await supabase
+      .from('contacts')
+      .delete()
+      .in('id', contactIds)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Erro ao deletar contatos:', error)
+      return { success: false, error: 'Erro ao deletar contatos' }
+    }
+
+    console.log('Contatos deletados com sucesso:', contactIds.length)
+    return { success: true, deletedCount: contactIds.length }
+  } catch (error) {
+    console.error('Erro ao deletar contatos:', error)
+    return { success: false, error: 'Erro interno do servidor' }
+  }
+}
