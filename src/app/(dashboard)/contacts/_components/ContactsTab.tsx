@@ -689,12 +689,15 @@ export function ContactsTab() {
       const result = await getContactImage(instance.id, contact.phone)
       
       if (result.success && result.data) {
-        const imageData = result.data as { link: string }[]
-        if (imageData && imageData.length > 0 && imageData[0].link) {
-          setContactImage(imageData[0].link)
+        console.log('Resposta da Z-API para imagem:', result.data)
+        const imageData = result.data as { link: string }
+        if (imageData && imageData.link) {
+          console.log('Link da imagem encontrado:', imageData.link)
+          setContactImage(imageData.link)
           toast.dismiss('get-image')
           toast.success(`✅ Imagem de ${contact.name} carregada!`)
         } else {
+          console.log('Nenhum link de imagem encontrado')
           toast.dismiss('get-image')
           toast.info(`${contact.name} não possui foto de perfil`)
           setContactImage(null)
