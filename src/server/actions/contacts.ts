@@ -945,7 +945,7 @@ export async function syncContactsFromZApi(instanceId: string) {
 }
 
 // Função auxiliar para buscar tokens da instância
-async function getInstanceTokens(instanceId: string) {
+export async function getInstanceTokens(instanceId: string) {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   

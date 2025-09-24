@@ -12,11 +12,20 @@ export interface GroupActionContext {
 
 // Função auxiliar para obter contexto da Z-API
 async function getZApiContext(): Promise<GroupActionContext> {
-  // Em produção, buscar do banco de dados ou variáveis de ambiente
+  // Importar a função getInstanceTokens do arquivo de contatos
+  const { getInstanceTokens } = await import('./contacts')
+  
+  // Buscar a primeira instância ativa
+  const tokens = await getInstanceTokens("")
+  
+  if (!tokens) {
+    throw new Error('Nenhuma instância Z-API ativa encontrada')
+  }
+  
   return {
-    instanceId: process.env.ZAPI_INSTANCE_ID || "3E6044FF2AD36009F1136EDA9E2AF219",
-    instanceToken: process.env.ZAPI_INSTANCE_TOKEN || "SEU_TOKEN_AQUI",
-    clientSecurityToken: process.env.ZAPI_CLIENT_SECURITY_TOKEN || "SEU_CLIENT_TOKEN_AQUI"
+    instanceId: tokens.instanceId,
+    instanceToken: tokens.instanceToken,
+    clientSecurityToken: tokens.clientSecurityToken
   }
 }
 
