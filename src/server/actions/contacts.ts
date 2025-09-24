@@ -344,11 +344,39 @@ export async function deleteTag(id: string) {
 export async function syncContactsFromZApi(instanceId: string) {
   try {
     const tokens = await getInstanceTokens(instanceId)
-    const result = await Zapi.getContacts(tokens)
+    
+    // Buscar todos os contatos usando paginação
+    let allContacts: unknown[] = []
+    let page = 1
+    const pageSize = 100 // Buscar 100 contatos por vez
+    
+    while (true) {
+      console.log(`Buscando contatos - página ${page}, tamanho ${pageSize}`)
+      const result = await Zapi.getContacts(tokens, page, pageSize)
+      
+      if (!result || !Array.isArray(result) || result.length === 0) {
+        console.log(`Nenhum contato encontrado na página ${page}`)
+        break
+      }
+      
+      allContacts = allContacts.concat(result)
+      console.log(`Página ${page}: ${result.length} contatos encontrados. Total: ${allContacts.length}`)
+      
+      // Se retornou menos que o pageSize, é a última página
+      if (result.length < pageSize) {
+        console.log('Última página atingida')
+        break
+      }
+      
+      page++
+    }
 
-    if (!result || !Array.isArray(result)) {
+    if (allContacts.length === 0) {
       return { success: false, error: 'Nenhum contato encontrado na ZAPI' }
     }
+
+    console.log(`Total de contatos encontrados: ${allContacts.length}`)
+    const result = allContacts
 
     const supabase = createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -368,14 +396,15 @@ export async function syncContactsFromZApi(instanceId: string) {
     // Processar cada contato da ZAPI
     for (const zapiContact of result) {
       try {
-        console.log('Processando contato:', zapiContact.name, zapiContact.phone)
+        const contact = zapiContact as { name: string; phone: string; short?: string; vname?: string; notify?: string; imgUrl?: string }
+        console.log('Processando contato:', contact.name, contact.phone)
         
         // Verificar se contato já existe
         const { data: existingContact, error: checkError } = await supabase
           .from('contacts')
           .select('id')
           .eq('user_id', userId)
-          .eq('phone', zapiContact.phone)
+          .eq('phone', contact.phone)
           .single()
 
         console.log('Verificação de contato existente:', { existingContact, checkError })
@@ -386,11 +415,11 @@ export async function syncContactsFromZApi(instanceId: string) {
           const { data: updatedContact, error: updateError } = await supabase
             .from('contacts')
             .update({
-              name: zapiContact.name || zapiContact.short || 'Contato',
-              short: zapiContact.short,
-              notify: zapiContact.notify,
-              vname: zapiContact.vname,
-              img_url: zapiContact.imgUrl,
+              name: contact.name || contact.short || 'Contato',
+              short: contact.short,
+              notify: contact.notify,
+              vname: contact.vname,
+              img_url: contact.imgUrl,
               has_whatsapp: true,
               updated_at: new Date().toISOString()
             })
@@ -403,18 +432,18 @@ export async function syncContactsFromZApi(instanceId: string) {
             syncedContacts.push(updatedContact)
           }
         } else {
-          console.log('Criando novo contato para:', zapiContact.name)
+          console.log('Criando novo contato para:', contact.name)
           // Criar novo contato
           const { data: newContact, error: insertError } = await supabase
             .from('contacts')
             .insert({
               user_id: userId,
-              name: zapiContact.name || zapiContact.short || 'Contato',
-              short: zapiContact.short,
-              phone: zapiContact.phone,
-              notify: zapiContact.notify,
-              vname: zapiContact.vname,
-              img_url: zapiContact.imgUrl,
+              name: contact.name || contact.short || 'Contato',
+              short: contact.short,
+              phone: contact.phone,
+              notify: contact.notify,
+              vname: contact.vname,
+              img_url: contact.imgUrl,
               has_whatsapp: true,
               tags: []
             })
