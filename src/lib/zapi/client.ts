@@ -11,10 +11,17 @@ export async function zapiFetch<T>(args: {
 }): Promise<T> {
   const { instanceId, instanceToken, clientSecurityToken, path, method = 'GET', body, query } = args;
   
-  // CORREÇÃO: Se instanceId for UUID do banco, usar instanceToken como instanceId real
-  const realInstanceId = instanceId.length === 36 && instanceId.includes('-') 
-    ? instanceToken  // Se for UUID, usar instanceToken como instanceId real
-    : instanceId;    // Se não for UUID, usar o instanceId recebido
+  // CORREÇÃO DEFINITIVA: Se instanceId for UUID do banco, usar instanceToken como instanceId real
+  // UUIDs têm 36 caracteres e contêm hífens
+  const isUuid = instanceId.length === 36 && instanceId.includes('-') && instanceId.includes('4');
+  const realInstanceId = isUuid ? instanceToken : instanceId;
+  
+  console.log('🔧 Z-API Correção:', { 
+    isUuid, 
+    originalInstanceId: instanceId, 
+    realInstanceId, 
+    instanceToken: instanceToken?.substring(0, 10) + '...' 
+  });
   
   // Debug logs
   console.log('🔍 Z-API Debug:', { 
