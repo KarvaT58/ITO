@@ -35,8 +35,10 @@ import {
   updateContact,
   syncContactsFromZApi,
   importContactsFromCSV,
-  deleteContacts
+  deleteContacts,
+  checkPhoneExists
 } from '@/server/actions/contacts'
+import { listZapiInstances } from '@/server/actions/zapi'
 
 // Tipos
 interface Contact {
@@ -49,6 +51,11 @@ interface Contact {
   hasWhatsapp: boolean
   createdAt: Date
   updatedAt: Date
+}
+
+interface PhoneExistsResponse {
+  exists?: boolean
+  existe?: boolean
 }
 
 interface Tag {
@@ -462,6 +469,55 @@ export function ContactsTab() {
     }
   }
 
+  const handleCheckWhatsApp = async (contact: Contact) => {
+    try {
+      // Buscar instâncias Z-API disponíveis
+      const instances = await listZapiInstances()
+      if (!instances || instances.length === 0) {
+        toast.error('Nenhuma instância Z-API configurada')
+        return
+      }
+
+      // Usar a primeira instância disponível
+      const instance = instances[0]
+      
+      toast.loading('Verificando WhatsApp...', { id: 'check-whatsapp' })
+      
+      const result = await checkPhoneExists(instance.id, contact.phone)
+      
+      if (result.success && result.data) {
+        const response = result.data as PhoneExistsResponse
+        const hasWhatsApp = response.exists || response.existe
+        
+        // Atualizar o contato com o status do WhatsApp
+        const updateResult = await updateContact(contact.id, {
+          hasWhatsApp: hasWhatsApp
+        })
+        
+        if (updateResult.success) {
+          toast.dismiss('check-whatsapp')
+          toast.success(
+            hasWhatsApp 
+              ? `✅ ${contact.name} tem WhatsApp!` 
+              : `❌ ${contact.name} não tem WhatsApp`
+          )
+          loadContacts()
+          loadTotalStats()
+        } else {
+          toast.dismiss('check-whatsapp')
+          toast.error('Erro ao atualizar status do WhatsApp')
+        }
+      } else {
+        toast.dismiss('check-whatsapp')
+        toast.error(result.error || 'Erro ao verificar WhatsApp')
+      }
+    } catch (error) {
+      console.error('Erro ao verificar WhatsApp:', error)
+      toast.dismiss('check-whatsapp')
+      toast.error('Erro ao verificar WhatsApp')
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -794,7 +850,7 @@ export function ContactsTab() {
                           <User className="h-4 w-4 mr-2" />
                           Editar Contato
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info('Funcionalidade em desenvolvimento')}>
+                        <DropdownMenuItem onClick={() => handleCheckWhatsApp(contact)}>
                           <Phone className="h-4 w-4 mr-2" />      
                           Verificar WhatsApp
                         </DropdownMenuItem>
