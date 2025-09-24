@@ -40,6 +40,16 @@ export async function createGroup(data: {
   try {
     const context = await getZApiContext()
     
+    // Debug: Log dos dados recebidos
+    console.log('🔍 createGroup - Dados recebidos:', {
+      groupName: data.groupName,
+      phones: data.phones,
+      autoInvite: data.autoInvite,
+      description: data.description,
+      hasPhoto: !!data.photo,
+      photoName: data.photo?.name
+    })
+
     // Preparar o body da requisição
     const body: {
       autoInvite: boolean
@@ -56,10 +66,12 @@ export async function createGroup(data: {
     // Adicionar descrição se fornecida
     if (data.description && data.description.trim()) {
       body.description = data.description.trim()
+      console.log('✅ Descrição adicionada:', body.description)
     }
 
     // Adicionar foto se fornecida
     if (data.photo) {
+      console.log('📸 Processando foto:', data.photo.name, data.photo.size, 'bytes')
       // Converter File para base64
       const base64Photo = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
@@ -67,13 +79,23 @@ export async function createGroup(data: {
           const result = reader.result as string
           // Remover o prefixo "data:image/...;base64," para obter apenas o base64
           const base64 = result.split(',')[1]
+          console.log('📸 Foto convertida para base64:', base64.substring(0, 50) + '...')
           resolve(base64)
         }
         reader.onerror = reject
         reader.readAsDataURL(data.photo!)
       })
       body.photo = base64Photo
+      console.log('✅ Foto adicionada ao body')
     }
+
+    console.log('📤 Body final enviado para Z-API:', {
+      autoInvite: body.autoInvite,
+      groupName: body.groupName,
+      phones: body.phones,
+      hasDescription: !!body.description,
+      hasPhoto: !!body.photo
+    })
     
     const response = await zapiFetch({
       instanceId: context.instanceId,
