@@ -494,18 +494,6 @@ export function ContactsTab() {
             <UserPlus className="h-4 w-4 mr-2" />
             Adicionar Todos à ZAPI
           </Button>
-          <Button variant="outline" onClick={selectAllContacts}>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Selecionar Todos
-          </Button>
-          <Button variant="outline" onClick={clearSelection}>
-            <XCircle className="h-4 w-4 mr-2" />
-            Limpar Seleção
-          </Button>
-          <Button variant="destructive" onClick={handleDeleteSelected} disabled={selectedContacts.length === 0}>
-            <XCircle className="h-4 w-4 mr-2" />
-            Apagar Selecionados ({selectedContacts.length})
-          </Button>
         </div>
       </div>
 
