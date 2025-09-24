@@ -140,7 +140,7 @@ interface Contact {
   vname?: string
   imgUrl?: string
   isBlocked?: boolean
-  hasWhatsApp?: boolean
+  has_whatsapp?: boolean
   created_at: string
   updated_at: string
 }
