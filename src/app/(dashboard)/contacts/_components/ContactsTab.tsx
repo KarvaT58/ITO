@@ -32,6 +32,7 @@ import {
   getContacts,
   getTags,
   createTag,
+  updateContact,
   syncContactsFromZApi,
   importContactsFromCSV,
   deleteContacts
@@ -315,6 +316,30 @@ export function ContactsTab() {
     } catch (error) {
       console.error('Erro ao criar etiqueta:', error)
       toast.error('Erro ao criar etiqueta')
+    }
+  }
+
+  const handleSaveContactTags = async () => {
+    if (!selectedContact) {
+      toast.error('Nenhum contato selecionado')
+      return
+    }
+
+    try {
+      const result = await updateContact(selectedContact.id, {
+        tags: selectedContact.tags
+      })
+
+      if (result.success) {
+        toast.success('Etiquetas atualizadas com sucesso!')
+        setIsAddTagToContactOpen(false)
+        loadContacts() // Recarregar a lista para mostrar as mudanças
+      } else {
+        toast.error(result.error || 'Erro ao atualizar etiquetas')
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar etiquetas:', error)
+      toast.error('Erro ao atualizar etiquetas')
     }
   }
 
@@ -1071,12 +1096,7 @@ export function ContactsTab() {
             <Button variant="outline" onClick={() => setIsAddTagToContactOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={() => {
-              // Aqui você pode implementar a lógica para salvar as etiquetas
-              toast.success('Etiquetas atualizadas com sucesso!')
-              setIsAddTagToContactOpen(false)
-              loadContacts() // Recarregar a lista
-            }}>
+            <Button onClick={handleSaveContactTags}>
               Salvar Etiquetas
             </Button>
           </DialogFooter>
