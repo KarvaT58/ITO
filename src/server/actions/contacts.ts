@@ -181,10 +181,12 @@ export async function removeContactsFromZApi(instanceId: string, phones: string[
 export async function checkPhoneExists(instanceId: string, phone: string) {
   try {
     const tokens = await getInstanceTokens(instanceId)
+    console.log(`🔍 Verificando WhatsApp para ${phone} com tokens:`, { instanceId, hasToken: !!tokens })
     const result = await Zapi.checkPhoneExists(tokens, phone)
+    console.log(`📱 Resposta Z-API para ${phone}:`, result)
     return { success: true, data: result }
   } catch (error) {
-    console.error('Erro ao verificar número:', error)
+    console.error(`❌ Erro ao verificar número ${phone}:`, error)
     return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
   }
 }
@@ -482,15 +484,27 @@ export async function processImportInBackground(contacts: Array<{
       const contact = contacts[i]
       
       try {
+        // Buscar tokens da instância
+        const tokens = await getInstanceTokens(instanceId)
+        if (!tokens) {
+          throw new Error('Instância Z-API não encontrada')
+        }
+
         // Verificar WhatsApp com timeout
         const whatsappResult = await Promise.race([
-          Zapi.checkPhoneExists({ instanceId, instanceToken: '', clientSecurityToken: '' }, contact.phone),
+          Zapi.checkPhoneExists({ 
+            instanceId, 
+            instanceToken: tokens.instanceToken, 
+            clientSecurityToken: tokens.clientSecurityToken 
+          }, contact.phone),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Timeout')), 8000)
           )
         ]) as { exists?: boolean; existe?: boolean }
         
-        const hasWhatsApp = whatsappResult?.exists || whatsappResult?.existe || false
+        console.log(`🔍 Verificação WhatsApp para ${contact.phone}:`, whatsappResult)
+        
+        const hasWhatsApp = whatsappResult?.exists === true || whatsappResult?.existe === true
         
         verifiedContacts.push({
           ...contact,
@@ -713,8 +727,18 @@ export async function syncContactsInBackground(instanceId: string) {
       throw new Error('Usuário não identificado')
     }
 
+    // Buscar tokens da instância
+    const tokens = await getInstanceTokens(instanceId)
+    if (!tokens) {
+      throw new Error('Instância Z-API não encontrada')
+    }
+
     // Buscar contatos da Z-API
-    const zapiContacts = await Zapi.getContacts({ instanceId, instanceToken: '', clientSecurityToken: '' })
+    const zapiContacts = await Zapi.getContacts({ 
+      instanceId, 
+      instanceToken: tokens.instanceToken, 
+      clientSecurityToken: tokens.clientSecurityToken 
+    })
     
     if (!zapiContacts || !Array.isArray(zapiContacts)) {
       throw new Error('Erro ao buscar contatos da Z-API')
