@@ -100,6 +100,11 @@ export function ContactsTab() {
   const [isAddTagToContactOpen, setIsAddTagToContactOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
+  // Estados para importação CSV
+  const [csvContacts, setCsvContacts] = useState<Array<{name: string, phone: string, email?: string, tag?: string}>>([])
+  const [isImporting, setIsImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState(0)
+
   // Estados para formulários
   const [newContact, setNewContact] = useState({
     firstName: '',
@@ -350,6 +355,62 @@ export function ContactsTab() {
     }
   }
 
+  const handleImportContacts = async () => {
+    if (csvContacts.length === 0) {
+      toast.error('Nenhum contato para importar')
+      return
+    }
+
+    setIsImporting(true)
+    setImportProgress(0)
+
+    try {
+      // Simular progresso da importação
+      const progressInterval = setInterval(() => {
+        setImportProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return prev
+          }
+          return prev + 10
+        })
+      }, 200)
+
+      // Importar contatos com verificação de duplicatas
+      const result = await importContactsFromCSV(csvContacts)
+
+      clearInterval(progressInterval)
+      setImportProgress(100)
+
+      if (result.success && result.data) {
+        const { imported, duplicates, errors } = result.data
+        
+        toast.success(
+          `Importação concluída! ${imported} contatos importados, ${duplicates} duplicados removidos, ${errors} erros`
+        )
+        
+        // Mostrar detalhes se houver duplicatas ou erros
+        if (duplicates > 0 || errors > 0) {
+          console.log('Detalhes da importação:', result.data.details)
+        }
+        
+        // Limpar estados e fechar modal
+        setCsvContacts([])
+        setIsImportOpen(false)
+        loadContacts()
+        loadTotalStats() // Atualizar estatísticas
+      } else {
+        toast.error(result.error || 'Erro ao importar contatos')
+      }
+    } catch (error) {
+      console.error('Erro ao importar contatos:', error)
+      toast.error('Erro ao importar contatos')
+    } finally {
+      setIsImporting(false)
+      setImportProgress(0)
+    }
+  }
+
   const handleSaveContactTags = async () => {
     if (!selectedContact) {
       toast.error('Nenhum contato selecionado')
@@ -438,28 +499,10 @@ export function ContactsTab() {
       }
 
       console.log('Contatos processados do CSV:', contacts)
-      toast.info(`Processando ${contacts.length} contatos...`)
-
-      // Importar contatos com verificação de duplicatas
-      const result = await importContactsFromCSV(contacts)
-
-      if (result.success && result.data) {
-        const { imported, duplicates, errors } = result.data
-        
-        toast.success(
-          `Importação concluída! ${imported} contatos importados, ${duplicates} duplicados removidos, ${errors} erros`
-        )
-        
-        // Mostrar detalhes se houver duplicatas ou erros
-        if (duplicates > 0 || errors > 0) {
-          console.log('Detalhes da importação:', result.data.details)
-        }
-        
-        setIsImportOpen(false)
-        loadContacts()
-      } else {
-        toast.error(result.error || 'Erro ao importar contatos')
-      }
+      
+      // Mostrar preview dos contatos
+      setCsvContacts(contacts)
+      toast.success(`${contacts.length} contatos encontrados no arquivo. Revise e clique em "Importar".`)
     } catch (error) {
       console.error('Erro ao processar arquivo CSV:', error)
       toast.error('Erro ao processar arquivo CSV')
@@ -871,57 +914,122 @@ export function ContactsTab() {
 
       {/* Modal Importar CSV */}
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Importar Contatos via CSV</DialogTitle>
             <DialogDescription>
               Faça upload de um arquivo CSV com seus contatos.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground mb-2">
-                Arraste e solte seu arquivo CSV aqui
-              </p>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="csv-upload"
-              />
-              <Button variant="outline" onClick={() => document.getElementById('csv-upload')?.click()}>
-                Selecionar Arquivo
-              </Button>
+          
+          {!isImporting ? (
+            <div className="space-y-4">
+              {csvContacts.length === 0 ? (
+                <>
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Arraste e solte seu arquivo CSV aqui
+                    </p>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <Button variant="outline" onClick={() => document.getElementById('csv-upload')?.click()}>
+                      Selecionar Arquivo
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <p><strong>Formato esperado:</strong></p>
+                    <p>Nome, Telefone, Email, Etiqueta</p>
+                    <p className="text-xs mt-1">Exemplo: João Silva, 5511999999999, joao@email.com, Cliente</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => {
+                        const csvContent = "Nome,Telefone,Email,Etiqueta\nJoão Silva,5511999999999,joao@email.com,Cliente\nMaria Santos,5511888888888,maria@email.com,Fornecedor\nPedro Costa,5511777777777,pedro@email.com,Amigo"
+                        const blob = new Blob([csvContent], { type: 'text/csv' })
+                        const url = window.URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = 'template-contatos.csv'
+                        a.click()
+                        window.URL.revokeObjectURL(url)
+                      }}
+                    >
+                      Baixar Template CSV
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Preview dos Contatos ({csvContacts.length} encontrados)</h4>
+                    <div className="max-h-60 overflow-y-auto border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-32">Nome</TableHead>
+                            <TableHead className="w-32">Telefone</TableHead>
+                            <TableHead className="w-32">Email</TableHead>
+                            <TableHead className="w-32">Etiqueta</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {csvContacts.slice(0, 10).map((contact, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="text-sm">{contact.name}</TableCell>
+                              <TableCell className="text-sm">{contact.phone}</TableCell>
+                              <TableCell className="text-sm">{contact.email || '-'}</TableCell>
+                              <TableCell className="text-sm">{contact.tag || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {csvContacts.length > 10 && (
+                        <div className="p-2 text-xs text-muted-foreground text-center">
+                          ... e mais {csvContacts.length - 10} contatos
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="text-sm text-muted-foreground">
-              <p><strong>Formato esperado:</strong></p>
-              <p>Nome, Telefone, Email, Etiqueta</p>
-              <p className="text-xs mt-1">Exemplo: João Silva, 5511999999999, joao@email.com, Cliente</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
-                onClick={() => {
-                  const csvContent = "Nome,Telefone,Email,Etiqueta\nJoão Silva,5511999999999,joao@email.com,Cliente\nMaria Santos,5511888888888,maria@email.com,Fornecedor\nPedro Costa,5511777777777,pedro@email.com,Amigo"
-                  const blob = new Blob([csvContent], { type: 'text/csv' })
-                  const url = window.URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = 'template-contatos.csv'
-                  a.click()
-                  window.URL.revokeObjectURL(url)
-                }}
-              >
-                Baixar Template CSV
-              </Button>
+          ) : (
+            <div className="space-y-4 text-center">
+              <div className="flex items-center justify-center">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Importando contatos...</p>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${importProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">{importProgress}% concluído</p>
+              </div>
             </div>
-          </div>
+          )}
+          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsImportOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsImportOpen(false)
+              setCsvContacts([])
+            }}>
               Cancelar
             </Button>
+            {csvContacts.length > 0 && !isImporting && (
+              <Button onClick={handleImportContacts}>
+                Importar {csvContacts.length} Contatos
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
