@@ -434,9 +434,11 @@ async function getInstanceTokens(instanceId: string) {
   // Se estamos no Vercel, pular verificação de usuário
   if (isVercel) {
     console.log('Vercel: Pulando verificação de usuário para Server Actions')
+    console.log('Vercel: InstanceId recebido:', instanceId)
     
     // Se temos um instanceId específico, tentar buscar por ele primeiro
     if (instanceId && instanceId !== 'undefined') {
+      console.log('Vercel: Buscando instância por ID específico:', instanceId)
       const { data: instance, error: instanceError } = await supabase
         .from('zapi_instances')
         .select('instance_id, instance_token, client_security_token')
@@ -444,7 +446,10 @@ async function getInstanceTokens(instanceId: string) {
         .eq('is_active', true)
         .single()
 
+      console.log('Vercel: Resultado busca por ID:', { instance, instanceError })
+
       if (instance && !instanceError) {
+        console.log('Vercel: Instância encontrada por ID específico')
         return {
           instanceId: instance.instance_id,
           instanceToken: instance.instance_token,
@@ -454,17 +459,22 @@ async function getInstanceTokens(instanceId: string) {
     }
     
     // Se não encontrou por ID específico, buscar primeira instância ativa
+    console.log('Vercel: Buscando primeira instância ativa')
     const { data: instances, error: instanceError } = await supabase
       .from('zapi_instances')
       .select('instance_id, instance_token, client_security_token')
       .eq('is_active', true)
       .limit(1)
 
+    console.log('Vercel: Resultado busca geral:', { instances, instanceError })
+
     if (instanceError || !instances || instances.length === 0) {
+      console.log('Vercel: Nenhuma instância ativa encontrada')
       throw new Error('Nenhuma instância ZAPI ativa encontrada')
     }
 
     const instance = instances[0]
+    console.log('Vercel: Usando primeira instância ativa:', instance)
     return {
       instanceId: instance.instance_id,
       instanceToken: instance.instance_token,
