@@ -58,6 +58,7 @@ export function GroupsTab() {
   const [contactSearch, setContactSearch] = useState("")
   const [showContactList, setShowContactList] = useState(false)
   const [allContacts, setAllContacts] = useState<{id: string; name: string; phone: string}[]>([])
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false)
 
   // Estados para configurações
   const [groupSettings, setGroupSettings] = useState<GroupSettingsType>({
@@ -75,19 +76,33 @@ export function GroupsTab() {
 
   // Carregar contatos
   const loadContacts = async () => {
+    setIsLoadingContacts(true)
     try {
-      // Aqui você pode implementar a chamada para carregar contatos
-      // Por enquanto, vou simular dados
-      const mockContacts = [
-        { id: "1", name: "João Silva", phone: "5511999999999" },
-        { id: "2", name: "Maria Santos", phone: "5511888888888" },
-        { id: "3", name: "Pedro Costa", phone: "5511777777777" },
-        { id: "4", name: "Ana Oliveira", phone: "5511666666666" },
-        { id: "5", name: "Carlos Lima", phone: "5511555555555" }
-      ]
-      setAllContacts(mockContacts)
+      // Importar a função getContacts do server actions
+      const { getContacts } = await import('@/server/actions/contacts')
+      
+      // Buscar todos os contatos (sem filtros, sem paginação)
+      const result = await getContacts("", "all", 1, 1000) // Buscar até 1000 contatos
+      
+      if (result.success && result.data) {
+        // Mapear os contatos para o formato esperado
+        const contacts = result.data.map(contact => ({
+          id: contact.id,
+          name: contact.name,
+          phone: contact.phone
+        }))
+        setAllContacts(contacts)
+      } else {
+        console.error("Erro ao carregar contatos:", result.error)
+        // Fallback para dados vazios em caso de erro
+        setAllContacts([])
+      }
     } catch (error) {
       console.error("Erro ao carregar contatos:", error)
+      // Fallback para dados vazios em caso de erro
+      setAllContacts([])
+    } finally {
+      setIsLoadingContacts(false)
     }
   }
 
@@ -532,28 +547,49 @@ export function GroupsTab() {
                             />
                           </div>
                           
-                          <div className="space-y-2">
-                            {filteredContacts.map((contact) => (
-                              <div
-                                key={contact.id}
-                                className={`flex items-center space-x-3 p-2 rounded border cursor-pointer hover:bg-gray-50 ${
-                                  selectedContacts.includes(contact.phone) ? 'bg-blue-50 border-blue-200' : ''
-                                }`}
-                                onClick={() => handleContactToggle(contact.id, contact.phone)}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedContacts.includes(contact.phone)}
-                                  onChange={() => handleContactToggle(contact.id, contact.phone)}
-                                  className="rounded"
-                                />
-                                <div className="flex-1">
-                                  <div className="font-medium">{contact.name}</div>
-                                  <div className="text-sm text-gray-500">{contact.phone}</div>
-                                </div>
+                          {isLoadingContacts ? (
+                            <div className="flex items-center justify-center py-8">
+                              <div className="flex items-center space-x-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                <span className="text-sm text-muted-foreground">Carregando contatos...</span>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ) : filteredContacts.length === 0 ? (
+                            <div className="text-center py-8">
+                              <div className="text-sm text-muted-foreground">
+                                {allContacts.length === 0 
+                                  ? "Nenhum contato encontrado. Adicione contatos na página de Contatos primeiro."
+                                  : "Nenhum contato encontrado com o filtro atual."
+                                }
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="text-xs text-muted-foreground">
+                                {filteredContacts.length} contato(s) encontrado(s)
+                              </div>
+                              {filteredContacts.map((contact) => (
+                                <div
+                                  key={contact.id}
+                                  className={`flex items-center space-x-3 p-2 rounded border cursor-pointer hover:bg-gray-50 ${
+                                    selectedContacts.includes(contact.phone) ? 'bg-blue-50 border-blue-200' : ''
+                                  }`}
+                                  onClick={() => handleContactToggle(contact.id, contact.phone)}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedContacts.includes(contact.phone)}
+                                    onChange={() => handleContactToggle(contact.id, contact.phone)}
+                                    className="rounded"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium">{contact.name}</div>
+                                    <div className="text-sm text-gray-500">{contact.phone}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
