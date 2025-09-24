@@ -23,8 +23,8 @@ export async function zapiFetch<T>(args: {
 
   if (method !== 'GET') {
     headers['Content-Type'] = 'application/json';
-    // Mapear { value } -> { valor } quando necessário
-    const payload = typeof body === 'object' && body !== null
+    // Mapear { value } -> { valor } quando necessário (apenas para objetos, não arrays)
+    const payload = typeof body === 'object' && body !== null && !Array.isArray(body)
       ? mapAppBodyToZapi(body as Record<string, unknown>)
       : body;
     init.body = payload ? JSON.stringify(payload) : undefined;
