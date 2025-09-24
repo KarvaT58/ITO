@@ -11,10 +11,21 @@ export async function zapiFetch<T>(args: {
 }): Promise<T> {
   const { instanceId, instanceToken, clientSecurityToken, path, method = 'GET', body, query } = args;
   
-  // Debug logs
-  console.log('🔍 Z-API Debug:', { instanceId, instanceToken: instanceToken?.substring(0, 10) + '...', clientSecurityToken: clientSecurityToken?.substring(0, 10) + '...', path });
+  // CORREÇÃO: Se instanceId for UUID do banco, usar instanceToken como instanceId real
+  const realInstanceId = instanceId.length === 36 && instanceId.includes('-') 
+    ? instanceToken  // Se for UUID, usar instanceToken como instanceId real
+    : instanceId;    // Se não for UUID, usar o instanceId recebido
   
-  let url = `https://api.z-api.io/instances/${instanceId}/token/${instanceToken}${path}`;
+  // Debug logs
+  console.log('🔍 Z-API Debug:', { 
+    originalInstanceId: instanceId, 
+    realInstanceId, 
+    instanceToken: instanceToken?.substring(0, 10) + '...', 
+    clientSecurityToken: clientSecurityToken?.substring(0, 10) + '...', 
+    path 
+  });
+  
+  let url = `https://api.z-api.io/instances/${realInstanceId}/token/${instanceToken}${path}`;
   
   if (query) {
     const searchParams = new URLSearchParams(query);
